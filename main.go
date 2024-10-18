@@ -26,6 +26,10 @@ func InitDB() *gorm.DB {
 	DB := initLocalDB()
 	err := DB.AutoMigrate(
 		&models.User{},
+		&models.AvatarCreation{},
+		&models.AvatarCharacterCreation{},
+		&models.AvatarVoiceCreation{},
+		&models.AvatarImageCreation{},
 	)
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)
@@ -58,6 +62,7 @@ func main() {
 	userService := services.NewUserService(DB)
 	userController := controllers.NewUserController(userService)
 
+	// user route group
 	userRG := r.Group("/users")
 	userRG.POST("/oauth2/:provider", userController.OAuth2Login)
 	userRG.Use(middleware.JWTAuthMiddleware("user", "admin"))
