@@ -35,6 +35,7 @@ func JWTAuthMiddleware(userRoles ...string) gin.HandlerFunc {
 		if len(userRoles) > 0 {
 			if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 				if len(userRoles) > 0 && !slices.Contains(userRoles, claims["scope"].(string)) {
+					log.Printf("User does not have the required role: %v not in %v", claims["scope"].(string), userRoles)
 					c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
 					c.Abort()
 					return

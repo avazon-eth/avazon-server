@@ -64,10 +64,7 @@ func main() {
 	{
 		userRG.GET("/me", userController.GetMyInfo)
 	}
-	userRG.Use(middleware.JWTAuthMiddleware("refresh"))
-	{
-		userRG.POST("/token/refresh", userController.RefreshToken)
-	}
+	r.POST("/users/token/refresh", middleware.JWTAuthMiddleware("refresh"), userController.RefreshToken)
 
 	r.Run(":8080")
 }

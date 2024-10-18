@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"avazon-api/controllers/errs"
 	"avazon-api/dto"
 	"avazon-api/middleware"
 	"avazon-api/services"
@@ -80,5 +81,78 @@ func (ctrl *UserController) GetMyInfo(c *gin.Context) {
 }
 
 func (ctrl *UserController) RefreshToken(c *gin.Context) {
+	var tokenDTO dto.Token
+	if err := c.ShouldBindJSON(&tokenDTO); err != nil {
+		HandleError(c, err)
+		return
+	}
 
+	accessToken, err := middleware.ValidateJWT(tokenDTO.AccessToken)
+	if err != nil || !accessToken.Valid {
+		log.Printf("Invalid access token: %v", err)
+		HandleError(c, errs.ErrInvalidJWT)
+		return
+	}
+
+	accessTokenUserID, err := middleware.GetUserIDFromTokenString(tokenDTO.AccessToken)
+	if err != nil {
+		log.Printf("Invalid access token: %v", err)
+		HandleError(c, errs.ErrInvalidJWT)
+		return
+	}
+	refreshToken, err := middleware.ValidateJWT(tokenDTO.RefreshToken)
+	if err != nil || !refreshToken.Valid {
+		log.Printf("Invalid refresh token: %v", err)
+		HandleError(c, errs.ErrInvalidJWT)
+		return
+	}
+	refreshTokenUserID, err := middleware.GetUserIDFromTokenString(tokenDTO.RefreshToken)
+	if err != nil {
+		log.Printf("Invalid refresh token: %v", err)
+		HandleError(c, errs.ErrInvalidJWT)
+		return
+	}
+	if accessTokenUserID != refreshTokenUserID {
+		log.Printf("Refresh token mismatch: %v", err)
+		HandleError(c, errs.ErrRefreshMismatch)
+		return
+	}
+
+	userID, ok := utils.GetUserID(c)
+	if !ok {
+		log.Printf("Cannot get user ID from token: %v", err)
+		HandleError(c, errs.ErrInvalidJWT)
+		return
+	}
+
+	userRole, err := middleware.GetUserRoleFromTokenString(tokenDTO.AccessToken)
+	if userRole == nil {
+		log.Printf("Cannot get user role from token: %v", err)
+		HandleError(c, errs.ErrInvalidJWT)
+		return
+	}
+	if err != nil {
+		log.Printf("Cannot get user role from token: %v", err)
+		HandleError(c, errs.ErrInvalidJWT)
+		return
+	}
+
+	accessJWT, err := middleware.GenerateJWT(userID, "access", 30, string(*userRole))
+	if err != nil {
+		log.Printf("Cannot generate access token: %v", err)
+		HandleError(c, errs.ErrInternalServerError)
+		return
+	}
+
+	refreshJWT, err := middleware.GenerateJWT(userID, "refresh", 60*24*7, "refresh")
+	if err != nil {
+		log.Printf("Cannot generate refresh token: %v", err)
+		HandleError(c, errs.ErrInternalServerError)
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.Token{
+		AccessToken:  accessJWT,
+		RefreshToken: refreshJWT,
+	})
 }
