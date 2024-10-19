@@ -3,7 +3,7 @@ version: '3.8'  # Updated to a newer, supported version
 services:
   avazon-api-server:
     container_name: avazon-api-server
-    image: avazon-api:latest  # Specify the image name here
+    image: seongduk/avazon-api:latest  # Specify the image name here
     env_file:
       - .env
     ports:
