@@ -30,6 +30,7 @@ var (
 	ErrJWTExpired          = AppError{StatusCode: http.StatusUnauthorized, Message: "JWT Expired", ErrorCode: "40101"}
 	ErrInvalidJWT          = AppError{StatusCode: http.StatusUnauthorized, Message: "Invalid JWT", ErrorCode: "40102"}
 	ErrRefreshMismatch     = AppError{StatusCode: http.StatusUnauthorized, Message: "Refresh Token Mismatch between access token and refresh token", ErrorCode: "40103"}
+	ErrOAuthTokenInvalid   = AppError{StatusCode: http.StatusUnauthorized, Message: "Invalid OAuth Token", ErrorCode: "40104"}
 	// Avatar Creation
 	ErrAvatarAlreadyCreated = AppError{StatusCode: http.StatusConflict, Message: "Avatar Already Created", ErrorCode: "40901"}
 	ErrImageNotCreated      = AppError{StatusCode: http.StatusBadRequest, Message: "Image Not Created", ErrorCode: "40002"}

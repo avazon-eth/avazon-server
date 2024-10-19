@@ -41,6 +41,10 @@ func (s *UserService) GetUserByGoogleAccessToken(accessToken string) (*models.Us
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
+		return nil, errs.ErrOAuthTokenInvalid
+	}
+
 	// Read response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {

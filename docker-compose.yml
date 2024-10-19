@@ -1,0 +1,33 @@
+version: '3.8'  # Updated to a newer, supported version
+
+services:
+  gid-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gid-api-container
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./app.log:/app/app.log
+      - ./test.db:/app/test.db
+      - ./private_key.pem:/app/private_key.pem
+      - ./public_key.pem:/app/public_key.pem
+    depends_on:
+      - redis  # Ensures Redis starts before gid-api
+    restart: unless-stopped  # Optional: Ensure service restarts on failure
+
+  redis:
+    image: redis:7.4.1
+    container_name: redis-1
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    restart: unless-stopped  # Optional: Ensure service restarts on failure
+
+volumes:
+  redis-data:

@@ -137,7 +137,7 @@ func main() {
 	r.POST("/users/token/refresh", middleware.JWTAuthMiddleware("refresh"), userController.RefreshToken)
 
 	// ======= Avatar Domain =======
-	// avatar creation
+	// ** Avatar Creation API **
 	avatarCreationService := services.NewAvatarCreateService(
 		DB,
 		func() tools.Assistant {
@@ -159,7 +159,7 @@ func main() {
 	}
 	avatarCreateRG.GET("/:creation_id/enter", avatarCreationController.EnterSession) // Websocket exchange
 
-	// avatar public
+	// ** Avatar Public API **
 	avatarService := services.NewAvatarService(DB)
 	avatarController := controllers.NewAvatarController(avatarService)
 	avatarPublicRG := r.Group("/avatar")
@@ -171,6 +171,18 @@ func main() {
 		avatarPublicRG.GET("/contents/:content_type", avatarController.GetAvatarContents)
 		avatarPublicRG.GET("/contents/:content_type/:content_id", avatarController.GetOneAvatarContent)
 	}
+
+	// avatarCreationRG := r.Group("/avatar/:avatar_id/contents/create")
+	// avatarCreationRG.Use(middleware.JWTAuthMiddleware())
+	// {
+	// 	// music : prompt -> create by one step
+	// 	avatarCreationRG.POST("/music", nil)
+	// 	avatarCreationRG.GET("/music/:creation_id", nil)
+
+	// 	// video : prompt -> create by two step (1. image, 2. video)
+	// 	avatarCreationRG.POST("/video/image", nil)
+	// 	avatarCreationRG.POST("/video/image/:creation_id/create", nil)
+	// }
 
 	r.Run(":8080")
 }
