@@ -4,6 +4,8 @@ import "time"
 
 type AvatarMusic struct {
 	ID            string    `json:"id" gorm:"primaryKey;varchar(40)"`
+	UserID        uint      `json:"user_id" gorm:"not null"`
+	User          User      `json:"user" gorm:"foreignKey:UserID;"`
 	Title         string    `json:"title" gorm:"varchar(255);not null"`
 	AvatarID      string    `json:"avatar_id" gorm:"varchar(40);not null"`
 	Avatar        Avatar    `json:"avatar" gorm:"foreignKey:AvatarID;"`
@@ -15,6 +17,8 @@ type AvatarMusic struct {
 
 type AvatarVideo struct {
 	ID                string    `json:"id" gorm:"primaryKey;varchar(40)"`
+	UserID            uint      `json:"user_id" gorm:"not null"`
+	User              User      `json:"user" gorm:"foreignKey:UserID;"`
 	Title             string    `json:"title" gorm:"varchar(255);not null"`
 	AvatarID          string    `json:"avatar_id" gorm:"varchar(40);not null"`
 	Avatar            Avatar    `json:"avatar" gorm:"foreignKey:AvatarID;"`

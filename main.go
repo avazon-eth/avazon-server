@@ -184,6 +184,12 @@ func main() {
 		avatarPublicRG.GET("/contents/:content_type", avatarController.GetAvatarContents)
 		avatarPublicRG.GET("/contents/:content_type/:content_id", avatarController.GetOneAvatarContent)
 	}
+	myAvatarRG := r.Group("/avatar/my")
+	myAvatarRG.Use(middleware.JWTAuthMiddleware())
+	{
+		myAvatarRG.GET("", avatarController.GetMyAvatars)
+		myAvatarRG.GET("/contents/:content_type", avatarController.GetMyAvatarContents)
+	}
 
 	// ** Avatar Content Creation API **
 	avatarContentCreationService := services.NewAvatarContentCreationService(

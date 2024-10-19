@@ -4,6 +4,7 @@ import (
 	"avazon-api/controllers/errs"
 	"avazon-api/dto"
 	"avazon-api/services"
+	"avazon-api/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -27,6 +28,33 @@ func (ctrl *AvatarController) GetAvatars(c *gin.Context) {
 	}
 
 	total, err := ctrl.AvatarService.GetAvatarsCount()
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.PageResponse{
+		Items: avatars,
+		Total: total,
+	})
+}
+
+func (ctrl *AvatarController) GetMyAvatars(c *gin.Context) {
+	userID, ok := utils.GetUserID(c)
+	if !ok {
+		HandleError(c, errs.ErrInvalidJWT)
+		return
+	}
+
+	page, limit := GetPagingParams(c)
+
+	avatars, err := ctrl.AvatarService.GetMyAvatars(userID, page, limit)
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+
+	total, err := ctrl.AvatarService.GetMyAvatarsCount(userID)
 	if err != nil {
 		HandleError(c, err)
 		return
@@ -117,5 +145,50 @@ func (ctrl *AvatarController) GetOneAvatarContent(c *gin.Context) {
 		c.JSON(http.StatusOK, video)
 	default:
 		HandleError(c, errs.ErrBadRequest, "music, video are only supported")
+	}
+}
+
+func (ctrl *AvatarController) GetMyAvatarContents(c *gin.Context) {
+	userID, ok := utils.GetUserID(c)
+	if !ok {
+		HandleError(c, errs.ErrInvalidJWT)
+		return
+	}
+
+	contentType := c.Param("content_type")
+	page, limit := GetPagingParams(c)
+
+	switch contentType {
+	case "music":
+		avatars, err := ctrl.AvatarService.GetMyAvatarMusicContents(userID, page, limit)
+		if err != nil {
+			HandleError(c, err)
+			return
+		}
+		total, err := ctrl.AvatarService.GetMyAvatarMusicContentsCount(userID)
+		if err != nil {
+			HandleError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, dto.PageResponse{
+			Items: avatars,
+			Total: total,
+		})
+
+	case "video":
+		avatars, err := ctrl.AvatarService.GetMyAvatarVideoContents(userID, page, limit)
+		if err != nil {
+			HandleError(c, err)
+			return
+		}
+		total, err := ctrl.AvatarService.GetMyAvatarVideoContentsCount(userID)
+		if err != nil {
+			HandleError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, dto.PageResponse{
+			Items: avatars,
+			Total: total,
+		})
 	}
 }

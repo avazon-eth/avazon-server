@@ -486,7 +486,10 @@ func (s *AvatarContentCreationService) CreateAvatarMusic(userID uint, avatarID s
 func (s *AvatarContentCreationService) GetAvatarMusicCreations(userID uint, avatarID *string, page int, limit int) ([]*models.AvatarMusicContentCreation, error) {
 	var musicCreations []*models.AvatarMusicContentCreation
 
-	q := s.DB.Where("user_id = ?", userID).Offset(page * limit).Limit(limit)
+	q := s.DB.Where("user_id = ?", userID).
+		Offset(page * limit).
+		Limit(limit).
+		Order("created_at DESC")
 	if avatarID != nil {
 		q = q.Where("avatar_id = ?", avatarID)
 	}
@@ -501,7 +504,10 @@ func (s *AvatarContentCreationService) GetAvatarMusicCreations(userID uint, avat
 func (s *AvatarContentCreationService) GetAvatarVideoCreations(userID uint, avatarID *string, page int, limit int) ([]*models.AvatarVideoContentCreation, error) {
 	var videoCreations []*models.AvatarVideoContentCreation
 
-	q := s.DB.Where("user_id = ?", userID).Offset(page * limit).Limit(limit)
+	q := s.DB.Where("user_id = ?", userID).
+		Offset(page * limit).
+		Limit(limit).
+		Order("created_at DESC")
 	if avatarID != nil {
 		q = q.Where("avatar_id = ?", avatarID)
 	}
@@ -515,7 +521,9 @@ func (s *AvatarContentCreationService) GetAvatarVideoCreations(userID uint, avat
 
 func (s *AvatarContentCreationService) GetAvatarMusicCreation(userID uint, musicCreationID string) (*models.AvatarMusicContentCreation, error) {
 	var music models.AvatarMusicContentCreation
-	if err := s.DB.Where("id = ? AND user_id = ?", musicCreationID, userID).First(&music).Error; err != nil {
+	if err := s.DB.
+		Where("id = ? AND user_id = ?", musicCreationID, userID).
+		First(&music).Error; err != nil {
 		log.Printf("Error fetching avatar music details: %v", err)
 		return nil, err
 	}
@@ -524,16 +532,20 @@ func (s *AvatarContentCreationService) GetAvatarMusicCreation(userID uint, music
 
 func (s *AvatarContentCreationService) GetAvatarVideoCreation(userID uint, videoCreationID string) (*models.AvatarVideoContentCreation, error) {
 	var video models.AvatarVideoContentCreation
-	if err := s.DB.Where("id = ? AND user_id = ?", videoCreationID, userID).First(&video).Error; err != nil {
+	if err := s.DB.
+		Where("id = ? AND user_id = ?", videoCreationID, userID).
+		First(&video).Error; err != nil {
 		log.Printf("Error fetching avatar video details: %v", err)
 		return nil, err
 	}
 	return &video, nil
 }
 
-func (s *AvatarContentCreationService) ConfirmAvatarMusic(userID uint, musicCreationID string) (*models.AvatarMusic, error) {
+func (s *AvatarContentCreationService) ConfirmAvatarMusic(userID uint, musicCreationID string, contentID string) (*models.AvatarMusic, error) {
 	var AvatarMusicContentCreation *models.AvatarMusicContentCreation
-	if err := s.DB.Where("id = ? AND user_id = ?", musicCreationID, userID).First(&AvatarMusicContentCreation).Error; err != nil {
+	if err := s.DB.
+		Where("id = ? AND user_id = ?", musicCreationID, userID).
+		First(&AvatarMusicContentCreation).Error; err != nil {
 		log.Printf("Error fetching avatar music creation: %v", err)
 		return nil, err
 	}
@@ -549,7 +561,9 @@ func (s *AvatarContentCreationService) ConfirmAvatarMusic(userID uint, musicCrea
 	}
 
 	avatarMusic := models.AvatarMusic{
-		ID:            AvatarMusicContentCreation.ID,
+		ID:            contentID,
+		UserID:        userID,
+		User:          AvatarMusicContentCreation.User,
 		Title:         AvatarMusicContentCreation.Title,
 		AvatarID:      AvatarMusicContentCreation.AvatarID,
 		Avatar:        AvatarMusicContentCreation.Avatar,
@@ -565,9 +579,11 @@ func (s *AvatarContentCreationService) ConfirmAvatarMusic(userID uint, musicCrea
 	return &avatarMusic, nil
 }
 
-func (s *AvatarContentCreationService) ConfirmAvatarVideo(userID uint, videoCreationID string) (*models.AvatarVideo, error) {
+func (s *AvatarContentCreationService) ConfirmAvatarVideo(userID uint, videoCreationID string, contentID string) (*models.AvatarVideo, error) {
 	var AvatarVideoContentCreation *models.AvatarVideoContentCreation
-	if err := s.DB.Where("id = ? AND user_id = ?", videoCreationID, userID).First(&AvatarVideoContentCreation).Error; err != nil {
+	if err := s.DB.
+		Where("id = ? AND user_id = ?", videoCreationID, userID).
+		First(&AvatarVideoContentCreation).Error; err != nil {
 		log.Printf("Error fetching avatar video creation: %v", err)
 		return nil, err
 	}
@@ -586,7 +602,9 @@ func (s *AvatarContentCreationService) ConfirmAvatarVideo(userID uint, videoCrea
 	}
 
 	avatarVideo := models.AvatarVideo{
-		ID:                AvatarVideoContentCreation.ID,
+		ID:                contentID,
+		UserID:            userID,
+		User:              AvatarVideoContentCreation.User,
 		AvatarID:          AvatarVideoContentCreation.AvatarID,
 		Avatar:            AvatarVideoContentCreation.Avatar,
 		ThumbnailImageURL: *AvatarVideoContentCreation.ThumbnailImageURL,

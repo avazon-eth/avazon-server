@@ -87,8 +87,19 @@ func (ctrl *AvatarContentCreationController) ConfirmAvatarMusic(c *gin.Context) 
 		HandleError(c, errs.ErrUnauthorized)
 		return
 	}
+	creationID := c.Param("creation_id")
+	if creationID == "" {
+		HandleError(c, errs.ErrBadRequest, "creation_id is required")
+		return
+	}
 
-	music, err := ctrl.AvatarContentCreationService.ConfirmAvatarMusic(userID, c.Param("creation_id"))
+	contentID := c.Query("content_id")
+	if contentID == "" {
+		HandleError(c, errs.ErrBadRequest, "content_id is required")
+		return
+	}
+
+	music, err := ctrl.AvatarContentCreationService.ConfirmAvatarMusic(userID, creationID, contentID)
 	if err != nil {
 		HandleError(c, err)
 		return
@@ -181,8 +192,19 @@ func (ctrl *AvatarContentCreationController) ConfirmAvatarVideo(c *gin.Context) 
 		HandleError(c, errs.ErrUnauthorized)
 		return
 	}
+	creationID := c.Param("creation_id")
+	if creationID == "" {
+		HandleError(c, errs.ErrBadRequest, "creation_id is required")
+		return
+	}
 
-	video, err := ctrl.AvatarContentCreationService.ConfirmAvatarVideo(userID, c.Param("creation_id"))
+	contentID := c.Query("content_id")
+	if contentID == "" {
+		HandleError(c, errs.ErrBadRequest, "content_id is required")
+		return
+	}
+
+	video, err := ctrl.AvatarContentCreationService.ConfirmAvatarVideo(userID, creationID, contentID)
 	if err != nil {
 		HandleError(c, err)
 		return
