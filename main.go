@@ -78,12 +78,22 @@ func main() {
 	if openAIKey == "" {
 		panic("OPENAI_API_KEY is not set")
 	}
+	openArtKey := os.Getenv("OPENART_API_KEY")
+	if openArtKey == "" {
+		panic("OPENART_API_KEY is not set")
+	}
+	elevenLabsKey := os.Getenv("ELEVENLABS_API_KEY")
+	if elevenLabsKey == "" {
+		panic("ELEVENLABS_API_KEY is not set")
+	}
 	// 2. components
 	s3Service, err := services.NewS3Service("aidol-contents")
 	if err != nil {
 		fmt.Println("Error initializing S3 service:", err)
 		return
 	}
+	openArtPainter := tools.NewOpenArtPainter(openArtKey)
+	elevenLabsVoiceActor := tools.NewElevenLabsVoiceActor(elevenLabsKey)
 
 	// ======= System Prompt Domain =======
 	// system prompts
@@ -118,7 +128,16 @@ func main() {
 
 	// ======= Avatar Domain =======
 	// avatar creation
-	avatarCreationService := services.NewAvatarCreationService(DB)
+	avatarCreationService := services.NewAvatarCreateService(
+		DB,
+		func() tools.Assistant {
+			return tools.NewOpenAIAssistant(openAIKey, "gpt-4o")
+		},
+		systemPromptService,
+		openArtPainter,
+		elevenLabsVoiceActor,
+		s3Service,
+	)
 	avatarCreationController := controllers.NewAvatarCreationController(avatarCreationService)
 	avatarCreateRG := r.Group("/avatar/create")
 	avatarCreateRG.Use(middleware.JWTAuthMiddleware())
