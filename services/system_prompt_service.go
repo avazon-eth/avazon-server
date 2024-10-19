@@ -36,6 +36,10 @@ const (
 	AG_AvatarVoiceEdit             Agent = "avatar_voice_edit"
 	AG_AvatarIntroduce             Agent = "avatar_introduce"
 	AG_AvatarChatVideoPrompt       Agent = "avatar_chat_video_prompt"
+	// content creation
+	AG_MusicSummarizer          Agent = "music_summarizer"
+	AG_MusicImagePromptCreation Agent = "music_image_prompt_create"
+	AG_MusicPromptCreation      Agent = "music_create"
 )
 
 // usually used by other service components

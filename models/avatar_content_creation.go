@@ -38,6 +38,8 @@ type AvatarMusicContentCreation struct {
 
 type AvatarVideoContentCreation struct {
 	ID       string `json:"id" gorm:"primaryKey;varchar(36)"` // UUID
+	UserID   uint   `json:"user_id"`
+	User     User   `json:"-" gorm:"foreignKey:UserID"`
 	AvatarID string `json:"avatar_id" gorm:"varchar(36);not null"`
 	Avatar   Avatar `json:"avatar" gorm:"foreignKey:AvatarID;"`
 	// step 1: image prompt
