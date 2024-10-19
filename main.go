@@ -5,11 +5,14 @@ import (
 	"avazon-api/middleware"
 	"avazon-api/models"
 	"avazon-api/services"
+	"avazon-api/tools"
 	"log"
+	"os"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -25,6 +28,8 @@ func initLocalDB() *gorm.DB {
 func InitDB() *gorm.DB {
 	DB := initLocalDB()
 	err := DB.AutoMigrate(
+		&models.SystemPrompt{},
+		&models.SystemPromptUsage{},
 		&models.User{},
 		&models.AvatarCreation{},
 		&models.AvatarCharacterCreation{},
@@ -49,6 +54,13 @@ func InitCORS(r *gin.Engine) {
 }
 
 func main() {
+	if os.Getenv("PROFILE") == "local" || os.Getenv("PROFILE") == "" {
+		err := godotenv.Load()
+		if err != nil {
+			log.Fatalf("Error loading .env file: %v", err)
+		}
+	}
+
 	DB := InitDB()
 	r := gin.Default()
 	InitCORS(r)
@@ -59,10 +71,36 @@ func main() {
 		panic(err)
 	}
 
+	// ======= Tools =======
+	// 1. keys
+	openAIKey := os.Getenv("OPENAI_API_KEY")
+	if openAIKey == "" {
+		panic("OPENAI_API_KEY is not set")
+	}
+
+	// ======= System Prompt Domain =======
+	// system prompts
+	systemPromptService := services.NewSystemPromptService(
+		DB,
+		func() tools.Assistant {
+			return tools.NewOpenAIAssistant(openAIKey, "gpt-4o")
+		},
+	)
+	systemPromptController := controllers.NewSystemPromptController(systemPromptService)
+	systemPromptRG := r.Group("/system/prompts")
+	systemPromptRG.Use(middleware.JWTAuthMiddleware("admin"))
+	{
+		systemPromptRG.POST("/:prompt_id", systemPromptController.CreateSystemPrompt)
+		systemPromptRG.GET("/", systemPromptController.GetAllSystemPrompts)
+		systemPromptRG.DELETE("/:prompt_id", systemPromptController.DeleteSystemPrompt)
+		systemPromptRG.POST("/usages/:agent_id/use/:prompt_id", systemPromptController.UpdateSystemPromptUsage)
+		systemPromptRG.GET("/usages", systemPromptController.GetAllSystemPromptUsages)
+		systemPromptRG.DELETE("/usages/:agent_id", systemPromptController.DeleteSystemPromptUsage)
+	}
+
+	// ======= User Domain =======
 	userService := services.NewUserService(DB)
 	userController := controllers.NewUserController(userService)
-
-	// user route group
 	userRG := r.Group("/users")
 	userRG.POST("/oauth2/:provider", userController.OAuth2Login)
 	userRG.Use(middleware.JWTAuthMiddleware("user", "admin"))
@@ -70,6 +108,19 @@ func main() {
 		userRG.GET("/me", userController.GetMyInfo)
 	}
 	r.POST("/users/token/refresh", middleware.JWTAuthMiddleware("refresh"), userController.RefreshToken)
+
+	// ======= Avatar Domain =======
+	// avatar creation
+	avatarCreationService := services.NewAvatarCreationService(DB)
+	avatarCreationController := controllers.NewAvatarCreationController(avatarCreationService)
+	avatarCreateRG := r.Group("/avatar/create")
+	avatarCreateRG.Use(middleware.JWTAuthMiddleware())
+	{
+		avatarCreateRG.POST("/new", avatarCreationController.StartCreation)
+		avatarCreateRG.GET("/:id", avatarCreationController.GetOneSession)
+		avatarCreateRG.POST("/:id", avatarCreationController.CreateAvatar)
+	}
+	avatarCreateRG.GET("/:id/enter/", avatarCreationController.EnterSession) // WebSocket
 
 	r.Run(":8080")
 }
