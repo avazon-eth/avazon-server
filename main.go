@@ -172,17 +172,18 @@ func main() {
 		avatarPublicRG.GET("/contents/:content_type/:content_id", avatarController.GetOneAvatarContent)
 	}
 
-	// avatarCreationRG := r.Group("/avatar/:avatar_id/contents/create")
-	// avatarCreationRG.Use(middleware.JWTAuthMiddleware())
-	// {
-	// 	// music : prompt -> create by one step
-	// 	avatarCreationRG.POST("/music", nil)
-	// 	avatarCreationRG.GET("/music/:creation_id", nil)
+	avatarCreationRG := r.Group("/avatar/:avatar_id/contents/create")
+	avatarCreationRG.Use(middleware.JWTAuthMiddleware())
+	{
+		// music : prompt -> create by one step
+		avatarCreationRG.POST("/music", nil)
+		avatarCreationRG.GET("/music/:creation_id/confirm", nil) // confirm with NFT
 
-	// 	// video : prompt -> create by two step (1. image, 2. video)
-	// 	avatarCreationRG.POST("/video/image", nil)
-	// 	avatarCreationRG.POST("/video/image/:creation_id/create", nil)
-	// }
+		// video : prompt -> create by two step (1. image, 2. video)
+		avatarCreationRG.POST("/video/image", nil)
+		avatarCreationRG.POST("/video/image/:creation_id/create", nil)
+		avatarCreationRG.POST("/video/image/:creation_id/confirm", nil) // confirm with NFT
+	}
 
 	r.Run(":8080")
 }
