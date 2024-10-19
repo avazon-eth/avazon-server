@@ -154,5 +154,15 @@ func main() {
 	}
 	avatarCreateRG.GET("/:creation_id/enter", avatarCreationController.EnterSession) // Websocket exchange
 
+	avatarPublicRG := r.Group("/avatar")
+	{
+		avatarPublicRG.GET("", nil)
+		avatarPublicRG.GET("/:avatar_id", nil)
+		// content_type: music, video
+		// query-params: page, limit, avatar_id, sort_by, sort_order
+		avatarPublicRG.GET("/contents/:content_type", nil)
+		avatarPublicRG.GET("/contents/:content_type/:content_id", nil)
+	}
+
 	r.Run(":8080")
 }
