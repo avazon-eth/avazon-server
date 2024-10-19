@@ -146,7 +146,7 @@ func main() {
 		avatarCreateRG.GET("/:creation_id", avatarCreationController.GetOneSession)
 		avatarCreateRG.POST("/:creation_id", avatarCreationController.CreateAvatar)
 	}
-	avatarCreateRG.GET("/:creation_id/enter", avatarCreationController.EnterSession) // WebSocket
+	avatarCreateRG.GET("/:creation_id/enter", avatarCreationController.EnterSession) // Websocket exchange
 
 	r.Run(":8080")
 }

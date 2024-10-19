@@ -2,8 +2,10 @@ package controllers
 
 import (
 	"avazon-api/services"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
 type AvatarCreationController struct {
@@ -12,6 +14,23 @@ type AvatarCreationController struct {
 
 func NewAvatarCreationController(avatarCreationService *services.AvatarCreateService) *AvatarCreationController {
 	return &AvatarCreationController{avatarCreationService: avatarCreationService}
+}
+
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		allowedOrigins := []string{
+			"http://localhost:8081",
+			"https://gid.cast-ing.kr",
+		}
+
+		origin := r.Header.Get("Origin")
+		for _, o := range allowedOrigins {
+			if o == origin {
+				return true
+			}
+		}
+		return false
+	},
 }
 
 // First of all, create a new avatar creation session

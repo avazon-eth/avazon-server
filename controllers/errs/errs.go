@@ -30,6 +30,17 @@ var (
 	ErrJWTExpired          = AppError{StatusCode: http.StatusUnauthorized, Message: "JWT Expired", ErrorCode: "40101"}
 	ErrInvalidJWT          = AppError{StatusCode: http.StatusUnauthorized, Message: "Invalid JWT", ErrorCode: "40102"}
 	ErrRefreshMismatch     = AppError{StatusCode: http.StatusUnauthorized, Message: "Refresh Token Mismatch between access token and refresh token", ErrorCode: "40103"}
+	// Avatar Creation
+	ErrAvatarAlreadyCreated = AppError{StatusCode: http.StatusConflict, Message: "Avatar Already Created", ErrorCode: "40901"}
+	ErrImageNotCreated      = AppError{StatusCode: http.StatusBadRequest, Message: "Image Not Created", ErrorCode: "40002"}
+	ErrCharacterNotCreated  = AppError{StatusCode: http.StatusBadRequest, Message: "Character Not Created", ErrorCode: "40003"}
+	ErrVoiceNotCreated      = AppError{StatusCode: http.StatusBadRequest, Message: "Voice Not Created", ErrorCode: "40004"}
+	// Avatar Content Creation
+	ErrContentCreationNotStartedYet    = AppError{StatusCode: http.StatusBadRequest, Message: "Content Creation Not Started Yet", ErrorCode: "40005"}
+	ErrImageNotCompleted               = AppError{StatusCode: http.StatusBadRequest, Message: "Image Not Completed", ErrorCode: "40006"}
+	ErrContentNotCompleted             = AppError{StatusCode: http.StatusBadRequest, Message: "Content Not Completed", ErrorCode: "40007"}
+	ErrContentCreationAlreadyCompleted = AppError{StatusCode: http.StatusBadRequest, Message: "Content Creation Already Completed", ErrorCode: "40008"}
+	ErrContentCreationFailed           = AppError{StatusCode: http.StatusBadRequest, Message: "Content Creation Failed", ErrorCode: "40009"}
 )
 
 // SendErrorResponse handles common error responses in the Gin context.

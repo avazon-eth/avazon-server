@@ -1,6 +1,8 @@
 package services
 
 import (
+	"avazon-api/controllers/errs"
+	"avazon-api/dto"
 	"avazon-api/models"
 	"avazon-api/tools"
 	"avazon-api/utils"
@@ -11,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -67,6 +70,128 @@ type AvatarCreateTools struct {
 	VoiceActor    tools.VoiceActor
 	PromptService *SystemPromptService
 	S3Service     *S3Service
+}
+
+func (s *AvatarCreateService) StartCreation(req dto.AvatarCreationRequest) (models.AvatarCreation, error) {
+	avatarCreation := models.AvatarCreation{
+		Name:    req.Name,
+		Species: req.Species,
+		Gender:  req.Gender,
+		// Age:         req.Age,
+		Language:    req.Language,
+		Country:     req.Country,
+		ImageStyle:  req.ImageStyle,
+		Description: req.Description,
+		StartedAt:   time.Now(),
+		Status:      "ready",
+	}
+	// generate random id
+	randomID := uuid.New().String()
+	avatarCreation.ID = randomID
+
+	if err := s.tools.DB.Create(&avatarCreation).Error; err != nil {
+		return models.AvatarCreation{}, err
+	}
+
+	return avatarCreation, nil
+}
+
+// GetOneSession retrieves an avatar creation session by its ID.
+// Parameters:
+//   - avatarCreationID: The ID of the avatar creation session to retrieve.
+//
+// Returns:
+//   - models.AvatarCreation: The retrieved avatar creation session.
+//   - error: An error object if any error occurs during the retrieval process.
+func (s *AvatarCreateService) GetOneSession(avatarCreationID string) (models.AvatarCreation, error) {
+	var avatarCreation models.AvatarCreation
+	if err := s.tools.DB.
+		Preload("ImageCreations", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at DESC")
+		}).
+		Preload("CharacterCreations", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at DESC")
+		}).
+		Preload("VoiceCreations", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at DESC")
+		}).
+		Where("id = ?", avatarCreationID).
+		First(&avatarCreation).Error; err != nil {
+		return models.AvatarCreation{}, err
+	}
+	return avatarCreation, nil
+}
+
+func (s *AvatarCreateService) GetCreateSessionChat(avatarCreationID string, objectType string, cursor int, size int) ([]models.AvatarCreationChat, error) {
+	var chats []models.AvatarCreationChat
+	if err := s.tools.DB.Where("avatar_creation_id = ? AND object_type = ? AND id < ?", avatarCreationID, objectType, cursor).
+		Order("id DESC").
+		Limit(size).
+		Find(&chats).Error; err != nil {
+		return []models.AvatarCreationChat{}, err
+	}
+	return chats, nil
+}
+
+// avatarID is for hashed NFT key
+func (s *AvatarCreateService) CreateAvatar(avatarCreationID string, avatarID string) (models.Avatar, error) {
+	var existingAvatar models.Avatar
+	s.tools.DB.Where("avatar_creation_id = ?", avatarCreationID).First(&existingAvatar)
+	if existingAvatar.ID != "" {
+		return models.Avatar{}, errs.ErrAvatarAlreadyCreated
+	}
+
+	var avatarCreation models.AvatarCreation
+	if err := s.tools.DB.Where("id = ?", avatarCreationID).
+		Preload("ImageCreations", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at DESC")
+		}).
+		Preload("CharacterCreations", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at DESC")
+		}).
+		Preload("VoiceCreations", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at DESC")
+		}).
+		First(&avatarCreation).Error; err != nil {
+		return models.Avatar{}, err
+	}
+
+	createdImage := avatarCreation.GetCreatedImage()
+	createdCharacter := avatarCreation.GetCreatedCharacter()
+	createdVoice := avatarCreation.GetCreatedVoice()
+	if createdImage == nil {
+		return models.Avatar{}, errs.ErrImageNotCreated
+	}
+	if createdCharacter == nil {
+		return models.Avatar{}, errs.ErrCharacterNotCreated
+	}
+	if createdVoice == nil {
+		return models.Avatar{}, errs.ErrVoiceNotCreated
+	}
+
+	avatar := models.Avatar{
+		ID:                   avatarID,
+		AvatarCreationID:     avatarCreationID,
+		Name:                 avatarCreation.Name,
+		Species:              avatarCreation.Species,
+		Gender:               avatarCreation.Gender,
+		Language:             avatarCreation.Language,
+		Country:              avatarCreation.Country,
+		Description:          avatarCreation.Description,
+		CreatedAt:            time.Now(),
+		ProfileImageURL:      createdImage.ImageURL,
+		VoiceURL:             createdVoice.VoiceURL,
+		AvatarVideoURL:       nil,
+		CharacterDescription: createdCharacter.Content,
+	}
+
+	if err := s.tools.DB.Create(&avatar).Error; err != nil {
+		return models.Avatar{}, err
+	}
+
+	// TODO: video creation here
+
+	return avatar, nil
 }
 
 func (s *AvatarCreateService) EnterSession(userID uint, sessionID string) (*AvatarCreateSession, error) {
