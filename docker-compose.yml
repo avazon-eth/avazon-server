@@ -1,11 +1,9 @@
 version: '3.8'  # Updated to a newer, supported version
 
 services:
-  gid-api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: gid-api-container
+  avazon-api-server:
+    container_name: avazon-api-server
+    image: avazon-api:latest  # Specify the image name here
     env_file:
       - .env
     ports:
@@ -16,7 +14,7 @@ services:
       - ./private_key.pem:/app/private_key.pem
       - ./public_key.pem:/app/public_key.pem
     depends_on:
-      - redis  # Ensures Redis starts before gid-api
+      - redis  # Ensures Redis starts before avazon-api
     restart: unless-stopped  # Optional: Ensure service restarts on failure
 
   redis:
