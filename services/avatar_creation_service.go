@@ -75,8 +75,15 @@ type AvatarCreateTools struct {
 	S3Service     *S3Service
 }
 
-func (s *AvatarCreateService) StartCreation(req dto.AvatarCreationRequest) (models.AvatarCreation, error) {
+func (s *AvatarCreateService) StartCreation(userID uint, req dto.AvatarCreationRequest) (models.AvatarCreation, error) {
+	var existingCreation models.AvatarCreation
+	s.tools.DB.Where("user_id = ? and status = ?", userID, models.AC_Processing).First(&existingCreation)
+	if existingCreation.ID != "" {
+		s.tools.DB.Delete(&existingCreation) // delete existing creation
+	}
+
 	avatarCreation := models.AvatarCreation{
+		UserID:  userID,
 		Name:    req.Name,
 		Species: req.Species,
 		Gender:  req.Gender,
@@ -106,7 +113,7 @@ func (s *AvatarCreateService) StartCreation(req dto.AvatarCreationRequest) (mode
 // Returns:
 //   - models.AvatarCreation: The retrieved avatar creation session.
 //   - error: An error object if any error occurs during the retrieval process.
-func (s *AvatarCreateService) GetOneSession(avatarCreationID string) (models.AvatarCreation, error) {
+func (s *AvatarCreateService) GetOneSession(userID uint, avatarCreationID string) (models.AvatarCreation, error) {
 	var avatarCreation models.AvatarCreation
 	if err := s.tools.DB.
 		Preload("ImageCreations", func(db *gorm.DB) *gorm.DB {
@@ -137,7 +144,7 @@ func (s *AvatarCreateService) GetCreateSessionChat(avatarCreationID string, obje
 }
 
 // avatarID is for hashed NFT key
-func (s *AvatarCreateService) CreateAvatar(avatarCreationID string, avatarID string) (models.Avatar, error) {
+func (s *AvatarCreateService) CreateAvatar(userID uint, avatarCreationID string, avatarID string) (models.Avatar, error) {
 	var existingAvatar models.Avatar
 	s.tools.DB.Where("avatar_creation_id = ?", avatarCreationID).First(&existingAvatar)
 	if existingAvatar.ID != "" {
@@ -145,7 +152,7 @@ func (s *AvatarCreateService) CreateAvatar(avatarCreationID string, avatarID str
 	}
 
 	var avatarCreation models.AvatarCreation
-	if err := s.tools.DB.Where("id = ?", avatarCreationID).
+	if err := s.tools.DB.Where("id = ? and user_id = ?", avatarCreationID, userID).
 		Preload("ImageCreations", func(db *gorm.DB) *gorm.DB {
 			return db.Order("created_at DESC")
 		}).
