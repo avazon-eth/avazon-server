@@ -36,6 +36,11 @@ func InitDB() *gorm.DB {
 		&models.AvatarCharacterCreation{},
 		&models.AvatarVoiceCreation{},
 		&models.AvatarImageCreation{},
+		&models.Avatar{},
+		&models.AvatarMusic{},
+		&models.AvatarVideo{},
+		&models.AvatarMusicContentCreation{},
+		&models.AvatarVideoContentCreation{},
 	)
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)
@@ -154,14 +159,17 @@ func main() {
 	}
 	avatarCreateRG.GET("/:creation_id/enter", avatarCreationController.EnterSession) // Websocket exchange
 
+	// avatar public
+	avatarService := services.NewAvatarService(DB)
+	avatarController := controllers.NewAvatarController(avatarService)
 	avatarPublicRG := r.Group("/avatar")
 	{
-		avatarPublicRG.GET("", nil)
-		avatarPublicRG.GET("/:avatar_id", nil)
+		avatarPublicRG.GET("", avatarController.GetAvatars)
+		avatarPublicRG.GET("/:avatar_id", avatarController.GetOneAvatar)
 		// content_type: music, video
 		// query-params: page, limit, avatar_id, sort_by, sort_order
-		avatarPublicRG.GET("/contents/:content_type", nil)
-		avatarPublicRG.GET("/contents/:content_type/:content_id", nil)
+		avatarPublicRG.GET("/contents/:content_type", avatarController.GetAvatarContents)
+		avatarPublicRG.GET("/contents/:content_type/:content_id", avatarController.GetOneAvatarContent)
 	}
 
 	r.Run(":8080")

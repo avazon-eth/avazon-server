@@ -44,7 +44,10 @@ var (
 )
 
 // SendErrorResponse handles common error responses in the Gin context.
-func SendErrorResponse(c *gin.Context, appErr AppError) {
+func SendErrorResponse(c *gin.Context, appErr AppError, message ...string) {
+	if len(message) > 0 {
+		appErr.Message = message[0]
+	}
 	c.JSON(appErr.StatusCode, appErr)
 	c.Abort()
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -12,7 +13,7 @@ import (
 )
 
 func HandleError(c *gin.Context, err error, message ...string) {
-	fmt.Printf("Error: %v\n", err)
+	fmt.Printf("Controller returns error: %v\n", err)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		errs.SendErrorResponse(c, errs.ErrNotFound)
 	} else if errors.Is(err, errs.ErrInvalidStatus) {
@@ -25,4 +26,16 @@ func HandleError(c *gin.Context, err error, message ...string) {
 	} else {
 		errs.SendErrorResponse(c, errs.ErrInternalServerError)
 	}
+}
+
+func GetPagingParams(c *gin.Context) (page int, limit int) {
+	page, err := strconv.Atoi(c.Query("page"))
+	if err != nil {
+		page = 0
+	}
+	limit, err = strconv.Atoi(c.Query("limit"))
+	if err != nil {
+		limit = 20
+	}
+	return
 }
