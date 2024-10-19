@@ -86,6 +86,10 @@ func main() {
 	if elevenLabsKey == "" {
 		panic("ELEVENLABS_API_KEY is not set")
 	}
+	runwayKey := os.Getenv("RUNWAY_API_KEY")
+	if runwayKey == "" {
+		panic("RUNWAY_API_KEY is not set")
+	}
 	// 2. components
 	s3Service, err := services.NewS3Service("aidol-contents")
 	if err != nil {
@@ -94,6 +98,7 @@ func main() {
 	}
 	openArtPainter := tools.NewOpenArtPainter(openArtKey)
 	elevenLabsVoiceActor := tools.NewElevenLabsVoiceActor(elevenLabsKey)
+	runwayVideoProducer := tools.NewRunwayVideoProducer(runwayKey)
 
 	// ======= System Prompt Domain =======
 	// system prompts
@@ -136,6 +141,7 @@ func main() {
 		systemPromptService,
 		openArtPainter,
 		elevenLabsVoiceActor,
+		runwayVideoProducer,
 		s3Service,
 	)
 	avatarCreationController := controllers.NewAvatarCreationController(avatarCreationService)

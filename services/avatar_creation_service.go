@@ -38,6 +38,7 @@ func NewAvatarCreateService(
 	promptService *SystemPromptService,
 	Painter tools.Painter,
 	VoiceActor tools.VoiceActor,
+	VideoProducer tools.VideoProducer,
 	S3Service *S3Service,
 ) *AvatarCreateService {
 	return &AvatarCreateService{
@@ -47,6 +48,7 @@ func NewAvatarCreateService(
 			DB:            db,
 			Painter:       Painter,
 			VoiceActor:    VoiceActor,
+			VideoProducer: VideoProducer,
 			PromptService: promptService,
 			S3Service:     S3Service,
 		},
@@ -68,6 +70,7 @@ type AvatarCreateTools struct {
 	DB            *gorm.DB // DB needed for saving data
 	Painter       tools.Painter
 	VoiceActor    tools.VoiceActor
+	VideoProducer tools.VideoProducer
 	PromptService *SystemPromptService
 	S3Service     *S3Service
 }
@@ -189,7 +192,21 @@ func (s *AvatarCreateService) CreateAvatar(avatarCreationID string, avatarID str
 		return models.Avatar{}, err
 	}
 
-	// TODO: video creation here
+	go func() {
+		video, err := s.tools.VideoProducer.Create(avatar.ProfileImageURL, string(AG_AvatarChatVideoPrompt))
+		if err != nil {
+			log.Println(err)
+		}
+
+		fileName := fmt.Sprintf("%s_chat.mp4", avatarID)
+		videoURL, err := s.tools.S3Service.UploadPublicFile(context.TODO(), fileName, video, "video/mp4")
+		if err != nil {
+			log.Println(err)
+		}
+
+		avatar.AvatarVideoURL = &videoURL
+		s.tools.DB.Model(&avatar).Update("avatar_video_url", videoURL)
+	}()
 
 	return avatar, nil
 }
