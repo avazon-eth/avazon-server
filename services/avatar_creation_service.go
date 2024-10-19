@@ -132,6 +132,8 @@ func (s *AvatarCreateService) GetOneSession(userID uint, avatarCreationID string
 	return avatarCreation, nil
 }
 
+func (s *AvatarCreateService) CreateAvatarImage() {}
+
 func (s *AvatarCreateService) GetCreateSessionChat(avatarCreationID string, objectType string, cursor int, size int) ([]models.AvatarCreationChat, error) {
 	var chats []models.AvatarCreationChat
 	if err := s.tools.DB.Where("avatar_creation_id = ? AND object_type = ? AND id < ?", avatarCreationID, objectType, cursor).
@@ -542,6 +544,15 @@ func (ss *AvatarCreateSession) CreateImage(summary string) (<-chan models.Avatar
 	return imageCreationChan, nil
 }
 
+func (s *AvatarCreateService) CreateImageByRequest(userID uint, creationID string, userReq string) error {
+	session, ok := s.sessions[creationID]
+	if !ok || session.session.UserID != userID {
+		return errs.ErrNotFound
+	}
+	_, err := session.CreateImage(userReq)
+	return err
+}
+
 // create character from character chattings.
 // if current character creation exists, edit it.
 func (ss *AvatarCreateSession) CreateCharacter() (<-chan models.AvatarCharacterCreation, error) {
@@ -611,6 +622,25 @@ func (ss *AvatarCreateSession) CreateCharacter() (<-chan models.AvatarCharacterC
 	}()
 
 	return characterCreationChan, nil
+}
+
+func (s *AvatarCreateService) CreateCharacterByRequest(userID uint, creationID string, userReq string) error {
+	session, ok := s.sessions[creationID]
+	if !ok || session.session.UserID != userID {
+		return errs.ErrNotFound
+	}
+	_, doneCh, errCh := session.HandleCharacterChat(userReq)
+
+	select {
+	case <-doneCh:
+		_, err := session.CreateCharacter()
+		if err != nil {
+			return err
+		}
+	case err := <-errCh:
+		return err
+	}
+	return errs.ErrInternalServerError
 }
 
 // create voice from voice chattings.
@@ -718,6 +748,14 @@ func (ss *AvatarCreateSession) CreateVoice(summary string, gender string, accent
 
 	return voiceCreationChan, nil
 }
+
+// func (s *AvatarCreateService) CreateVoiceByRequest(userID uint, creationID string, userReq string) error {
+// 	session, ok := s.sessions[creationID]
+// 	if !ok || session.session.UserID != userID {
+// 		return errs.ErrNotFound
+// 	}
+
+// }
 
 // don't use this. CreateCharacter() will handle this.
 // // edit character from character chattings

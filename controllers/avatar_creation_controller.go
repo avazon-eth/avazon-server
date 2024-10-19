@@ -82,6 +82,40 @@ func (ctrl *AvatarCreationController) GetOneSession(c *gin.Context) {
 	c.JSON(http.StatusOK, avatarCreation)
 }
 
+func (ctrl *AvatarCreationController) CreateAvatarImage(c *gin.Context) {
+	creationID := c.Param("creation_id")
+	userID, ok := utils.GetUserID(c)
+	if !ok {
+		HandleError(c, errs.ErrUnauthorized)
+		return
+	}
+	var req dto.AvatarImageCreationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		HandleError(c, err)
+		return
+	}
+	err := ctrl.AvatarCreationService.CreateImageByRequest(userID, creationID, req.Summary)
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Image creation started"})
+}
+
+func (ctrl *AvatarCreationController) CreateAvatarCharacter(c *gin.Context) {
+	// creationID := c.Param("creation_id")
+	// userID, ok := utils.GetUserID(c)
+	// if !ok {
+	// 	HandleError(c, errs.ErrUnauthorized)
+	// 	return
+	// }
+
+}
+
+func (ctrl *AvatarCreationController) CreateAvatarVoice(c *gin.Context) {
+
+}
+
 func (ctrl *AvatarCreationController) CreateAvatar(c *gin.Context) {
 	avatarCreationID := c.Param("creation_id")
 	userID, ok := utils.GetUserID(c)

@@ -162,6 +162,10 @@ func main() {
 		avatarCreateRG.POST("/new", avatarCreationController.StartCreation)
 		avatarCreateRG.GET("/:creation_id", avatarCreationController.GetOneSession)
 		avatarCreateRG.POST("/:creation_id", avatarCreationController.CreateAvatar)
+		// also has RESTful interface
+		avatarCreateRG.POST("/:creation_id/image", avatarCreationController.CreateAvatarImage)
+		avatarCreateRG.POST("/:creation_id/character", avatarCreationController.CreateAvatarCharacter)
+		avatarCreateRG.POST("/:creation_id/voice", avatarCreationController.CreateAvatarVoice)
 	}
 	avatarCreateRG.GET("/:creation_id/enter", avatarCreationController.EnterSession) // Websocket exchange
 

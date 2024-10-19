@@ -27,20 +27,26 @@ func (ctrl *UserController) OAuth2Login(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "OAuth provider is required"})
 		return
 	}
-	// Header: X-OAuth2-Token
-	oauthToken := c.GetHeader("X-OAuth2-Token")
-	if oauthToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "OAuth token is required"})
-		return
-	}
+	// Header: X-OAuth2-Auth
+	// oauthCode := c.GetHeader("X-OAuth2-Auth")
+	// if oauthCode == "" {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "OAuth code is required"})
+	// 	return
+	// }
 
 	if oauthProvider == "google" {
-		user, err := ctrl.UserService.GetUserByGoogleAccessToken(oauthToken)
+		googleCode := c.Query("code")
+		if googleCode == "" {
+			HandleError(c, errs.ErrBadRequest, "Google authorization code is required")
+			return
+		}
+		googleAccessToken, err := ctrl.UserService.GetUserGoogleAccessTokenByAuthorizationCode(googleCode)
 		if err != nil {
 			HandleError(c, err)
 			return
 		}
-		if user == nil {
+		user, err := ctrl.UserService.GetUserByGoogleAccessToken(googleAccessToken)
+		if err != nil {
 			HandleError(c, err)
 			return
 		}
