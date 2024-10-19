@@ -7,10 +7,10 @@ import (
 )
 
 type AvatarCreationController struct {
-	avatarCreationService *services.AvatarCreationService
+	avatarCreationService *services.AvatarCreateService
 }
 
-func NewAvatarCreationController(avatarCreationService *services.AvatarCreationService) *AvatarCreationController {
+func NewAvatarCreationController(avatarCreationService *services.AvatarCreateService) *AvatarCreationController {
 	return &AvatarCreationController{avatarCreationService: avatarCreationService}
 }
 

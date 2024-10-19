@@ -39,6 +39,15 @@ const (
 )
 
 // usually used by other service components
+func (s *SystemPromptService) GetSystemPrompt(promptAgent Agent) (string, error) {
+	var promptUsage models.SystemPromptUsage
+	if err := s.DB.Preload("Prompt").First(&promptUsage, "agent_id = ?", promptAgent).Error; err != nil {
+		return "", fmt.Errorf("system prompt not found: %w", err)
+	}
+	return promptUsage.Prompt.Prompt, nil
+}
+
+// usually used by other service components
 func (s *SystemPromptService) Use(agent Agent, input string) (string, error) {
 	var systemPromptUsage models.SystemPromptUsage
 	result := s.DB.Where("agent_id = ?", agent).Preload("Prompt").First(&systemPromptUsage)

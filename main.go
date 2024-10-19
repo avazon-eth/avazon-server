@@ -6,6 +6,7 @@ import (
 	"avazon-api/models"
 	"avazon-api/services"
 	"avazon-api/tools"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -76,6 +77,12 @@ func main() {
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 	if openAIKey == "" {
 		panic("OPENAI_API_KEY is not set")
+	}
+	// 2. components
+	s3Service, err := services.NewS3Service("aidol-contents")
+	if err != nil {
+		fmt.Println("Error initializing S3 service:", err)
+		return
 	}
 
 	// ======= System Prompt Domain =======
