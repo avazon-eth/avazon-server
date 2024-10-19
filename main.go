@@ -117,10 +117,10 @@ func main() {
 	avatarCreateRG.Use(middleware.JWTAuthMiddleware())
 	{
 		avatarCreateRG.POST("/new", avatarCreationController.StartCreation)
-		avatarCreateRG.GET("/:id", avatarCreationController.GetOneSession)
-		avatarCreateRG.POST("/:id", avatarCreationController.CreateAvatar)
+		avatarCreateRG.GET("/:creation_id", avatarCreationController.GetOneSession)
+		avatarCreateRG.POST("/:creation_id", avatarCreationController.CreateAvatar)
 	}
-	avatarCreateRG.GET("/:id/enter/", avatarCreationController.EnterSession) // WebSocket
+	avatarCreateRG.GET("/:creation_id/enter", avatarCreationController.EnterSession) // WebSocket
 
 	r.Run(":8080")
 }
