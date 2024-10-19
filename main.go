@@ -41,6 +41,7 @@ func InitDB() *gorm.DB {
 		&models.AvatarVideo{},
 		&models.AvatarMusicContentCreation{},
 		&models.AvatarVideoContentCreation{},
+		&models.AvatarImageRemix{},
 	)
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)
@@ -103,7 +104,7 @@ func main() {
 		panic("JENAI_API_KEY is not set")
 	}
 	// 2. components
-	s3Service, err := services.NewS3Service("aidol-contents")
+	s3Service, err := services.NewS3Service("avazon", "us-west-1")
 	if err != nil {
 		fmt.Println("Error initializing S3 service:", err)
 		return
@@ -212,11 +213,22 @@ func main() {
 		avatarCreationRG.POST("/music/:creation_id/confirm", avatarContentCreationController.ConfirmAvatarMusic) // confirm with NFT
 
 		// video : prompt -> create by two step (1. image, 2. video)
-		avatarCreationRG.POST("/video/image", avatarContentCreationController.StartVideoCreation)
-		avatarCreationRG.GET("/video", avatarContentCreationController.GetVideoCreations)
+		avatarCreationRG.POST("/video/image", avatarContentCreationController.StartVideoImageCreation)
+		avatarCreationRG.GET("/video", avatarContentCreationController.GetVideoCreation)
 		avatarCreationRG.GET("/video/:creation_id", avatarContentCreationController.GetOneVideoCreation)
-		avatarCreationRG.POST("/video/image/:creation_id/create", avatarContentCreationController.GetAllVideoCreations)
+		avatarCreationRG.POST("/video/image/:creation_id/create", avatarContentCreationController.StartVideoCreationFromImage)
 		avatarCreationRG.POST("/video/image/:creation_id/confirm", avatarContentCreationController.ConfirmAvatarVideo) // confirm with NFT
+	}
+
+	// ** Avatar Remix API **
+	avatarRemixService := services.NewAvatarRemixService(DB, s3Service, openArtPainter)
+	avatarRemixController := controllers.NewAvatarRemixController(avatarRemixService)
+	avatarRemixRG := r.Group("/avatar/:avatar_id/remix")
+	avatarRemixRG.Use(middleware.JWTAuthMiddleware())
+	{
+		avatarRemixRG.POST("/image", avatarRemixController.StartImageRemix)
+		avatarRemixRG.GET("/image/:remix_id", avatarRemixController.GetOneImageRemix)
+		avatarRemixRG.POST("/image/:remix_id/confirm", avatarRemixController.ConfirmImageRemix)
 	}
 
 	r.Run(":8080")

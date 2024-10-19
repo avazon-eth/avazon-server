@@ -710,6 +710,7 @@ func (a *OpenArtPainter) ChangeStyle(imageBytes []byte, contentType string, prom
 	}
 
 	req, err := http.NewRequest("POST", "https://openart.ai/api/apps/create", bytes.NewBuffer(payloadBytes))
+
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to create request: %w", err)
 	}
@@ -739,6 +740,7 @@ func (a *OpenArtPainter) ChangeStyle(imageBytes []byte, contentType string, prom
 
 	// 3. Periodically check the status of the generated image
 	var finalImageURL string
+	refetchCount := 0
 	for {
 		// Request to check the status of the image
 		placeholderURL := fmt.Sprintf("https://openart.ai/api/create/image_placeholder?generation_history_id=%s", responseData.GenerationHistoryID)
@@ -764,18 +766,23 @@ func (a *OpenArtPainter) ChangeStyle(imageBytes []byte, contentType string, prom
 		}
 
 		// Check image status
-		allCompleted := true
-		for _, img := range imagePlaceholderResp.Images {
-			if img.Status == "completed" {
-				finalImageURL = img.URL // Save the URL of the first completed image
-				break
-			} else if img.Status == "pending" {
-				allCompleted = false
+		if len(imagePlaceholderResp.Images) > 0 {
+			completed := false
+			for _, img := range imagePlaceholderResp.Images {
+				if img.Status == "completed" && img.URL != "" {
+					finalImageURL = img.URL // Save the URL of the first completed image
+					completed = true
+					break
+				}
 			}
-		}
-
-		if allCompleted {
-			break
+			if completed {
+				break
+			}
+		} else {
+			refetchCount += 1
+			if refetchCount > 3 {
+				return nil, "", fmt.Errorf("no images found in result")
+			}
 		}
 
 		// Wait briefly before checking status again

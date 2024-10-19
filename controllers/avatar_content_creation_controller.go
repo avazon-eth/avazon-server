@@ -110,7 +110,7 @@ func (ctrl *AvatarContentCreationController) ConfirmAvatarMusic(c *gin.Context) 
 
 // ========== Video Creation ==========
 
-func (ctrl *AvatarContentCreationController) StartVideoCreation(c *gin.Context) {
+func (ctrl *AvatarContentCreationController) StartVideoImageCreation(c *gin.Context) {
 	userID, ok := utils.GetUserID(c)
 	if !ok {
 		HandleError(c, errs.ErrUnauthorized)
@@ -132,7 +132,7 @@ func (ctrl *AvatarContentCreationController) StartVideoCreation(c *gin.Context) 
 	c.JSON(http.StatusOK, videoCreation)
 }
 
-func (ctrl *AvatarContentCreationController) GetVideoCreations(c *gin.Context) {
+func (ctrl *AvatarContentCreationController) GetVideoCreation(c *gin.Context) {
 	userID, ok := utils.GetUserID(c)
 	if !ok {
 		HandleError(c, errs.ErrUnauthorized)
@@ -162,6 +162,39 @@ func (ctrl *AvatarContentCreationController) GetAllVideoCreations(c *gin.Context
 	}
 
 	videoCreation, err := ctrl.AvatarContentCreationService.GetAvatarVideoCreation(userID, c.Param("creation_id"))
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, videoCreation)
+}
+
+func (ctrl *AvatarContentCreationController) StartVideoCreationFromImage(c *gin.Context) {
+	userID, ok := utils.GetUserID(c)
+	if !ok {
+		HandleError(c, errs.ErrUnauthorized)
+		return
+	}
+
+	avatarID := c.Param("avatar_id")
+	if avatarID == "" {
+		HandleError(c, errs.ErrBadRequest, "avatar_id is required")
+		return
+	}
+	creationID := c.Param("creation_id")
+	if creationID == "" {
+		HandleError(c, errs.ErrBadRequest, "creation_id is required")
+		return
+	}
+
+	var request dto.AvatarVideoRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		HandleError(c, errs.ErrBadRequest)
+		return
+	}
+
+	videoCreation, err := ctrl.AvatarContentCreationService.CreateAvatarVideoFromImage(userID, avatarID, creationID, request)
 	if err != nil {
 		HandleError(c, err)
 		return

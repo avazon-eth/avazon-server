@@ -5,7 +5,7 @@ import "time"
 type AvatarContentCreationStatus string
 
 // yet -> image_progressing -> image_completed
-// -> content_progressing -> content_completed -> completed
+// -> content_progressing -> content_completed -> confirmed
 // if error occurs, status -> failed
 const (
 	ACC_Yet                AvatarContentCreationStatus = "yet"
@@ -13,7 +13,7 @@ const (
 	ACC_ImageCompleted     AvatarContentCreationStatus = "image_completed"
 	ACC_ContentProgressing AvatarContentCreationStatus = "content_progressing"
 	ACC_ContentCompleted   AvatarContentCreationStatus = "content_completed"
-	ACC_Completed          AvatarContentCreationStatus = "completed"
+	ACC_Confirmed          AvatarContentCreationStatus = "confirmed"
 	ACC_Failed             AvatarContentCreationStatus = "failed"
 )
 

@@ -148,7 +148,7 @@ func (s *AvatarCreateService) GetCreateSessionChat(avatarCreationID string, obje
 // avatarID is for hashed NFT key
 func (s *AvatarCreateService) CreateAvatar(userID uint, avatarCreationID string, avatarID string) (models.Avatar, error) {
 	var existingAvatar models.Avatar
-	s.tools.DB.Where("avatar_creation_id = ?", avatarCreationID).First(&existingAvatar)
+	s.tools.DB.Where("avatar_creation_id = ? AND user_id = ?", avatarCreationID, userID).First(&existingAvatar)
 	if existingAvatar.ID != "" {
 		return models.Avatar{}, errs.ErrAvatarAlreadyCreated
 	}
@@ -183,6 +183,7 @@ func (s *AvatarCreateService) CreateAvatar(userID uint, avatarCreationID string,
 
 	avatar := models.Avatar{
 		ID:                   avatarID,
+		UserID:               userID,
 		AvatarCreationID:     avatarCreationID,
 		Name:                 avatarCreation.Name,
 		Species:              avatarCreation.Species,
@@ -798,6 +799,7 @@ func (s *AvatarCreateService) CreateCharacterByRequest(userID uint, creationID s
 	}
 
 	characterCreation := &models.AvatarCharacterCreation{
+		UserID:           userID,
 		AvatarCreationID: creationID,
 		AvatarCreation:   avatarCreation,
 		Prompt:           characterPrompt,
@@ -817,6 +819,7 @@ func (s *AvatarCreateService) CreateVoiceByRequest(userID uint, creationID strin
 	}
 
 	voiceCreation := &models.AvatarVoiceCreation{
+		UserID:           userID,
 		AvatarCreationID: creationID,
 		AvatarCreation:   avatarCreation,
 		Status:           models.AC_Ready,

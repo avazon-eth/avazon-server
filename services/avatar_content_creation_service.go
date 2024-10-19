@@ -165,7 +165,7 @@ func (s *AvatarContentCreationService) CreateAvatarVideoFromImage(userID uint, a
 	if avatarVideo.Status == models.ACC_ContentProgressing {
 		return nil, errs.ErrContentNotCompleted
 	}
-	if avatarVideo.Status == models.ACC_Completed {
+	if avatarVideo.Status == models.ACC_Confirmed {
 		return nil, errs.ErrContentCreationAlreadyCompleted
 	}
 
@@ -326,7 +326,7 @@ func (s *AvatarContentCreationService) RegenerateAvatarMusicImage(userID uint, a
 	if mc.Status == models.ACC_ImageProgressing {
 		return nil, errs.ErrImageNotCompleted
 	}
-	if mc.Status == models.ACC_Completed {
+	if mc.Status == models.ACC_Confirmed {
 		return nil, errs.ErrContentCreationAlreadyCompleted
 	}
 
@@ -418,7 +418,7 @@ func (s *AvatarContentCreationService) CreateAvatarMusic(userID uint, avatarID s
 	if avatarMusic.Status == models.ACC_ContentProgressing {
 		return nil, errs.ErrContentNotCompleted
 	}
-	if avatarMusic.Status == models.ACC_Completed {
+	if avatarMusic.Status == models.ACC_Confirmed {
 		return nil, errs.ErrContentCreationAlreadyCompleted
 	}
 
@@ -554,7 +554,7 @@ func (s *AvatarContentCreationService) ConfirmAvatarMusic(userID uint, musicCrea
 		return nil, errs.ErrContentNotCompleted
 	}
 
-	AvatarMusicContentCreation.Status = models.ACC_Completed
+	AvatarMusicContentCreation.Status = models.ACC_Confirmed
 	if err := s.DB.Model(&AvatarMusicContentCreation).Updates(AvatarMusicContentCreation).Error; err != nil {
 		log.Printf("Error updating avatar music creation status to completed: %v", err)
 		return nil, err
@@ -588,14 +588,14 @@ func (s *AvatarContentCreationService) ConfirmAvatarVideo(userID uint, videoCrea
 		return nil, err
 	}
 
-	if AvatarVideoContentCreation.Status == models.ACC_Completed {
+	if AvatarVideoContentCreation.Status == models.ACC_Confirmed {
 		return nil, errs.ErrContentCreationAlreadyCompleted
 	}
 	if AvatarVideoContentCreation.Status != models.ACC_ContentCompleted {
 		return nil, errs.ErrContentNotCompleted
 	}
 
-	AvatarVideoContentCreation.Status = models.ACC_Completed
+	AvatarVideoContentCreation.Status = models.ACC_Confirmed
 	if err := s.DB.Model(&AvatarVideoContentCreation).Updates(AvatarVideoContentCreation).Error; err != nil {
 		log.Printf("Error updating avatar video creation status to completed: %v", err)
 		return nil, err

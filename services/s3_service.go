@@ -17,9 +17,9 @@ type S3Service struct {
 }
 
 // NewS3Service initializes the S3Service.
-func NewS3Service(bucketName string) (*S3Service, error) {
+func NewS3Service(bucketName string, region string) (*S3Service, error) {
 	// Load AWS configuration
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("ap-northeast-2"))
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
 	if err != nil {
 		return nil, fmt.Errorf("unable to load AWS config: %w", err)
 	}
