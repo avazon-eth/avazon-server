@@ -95,15 +95,21 @@ func main() {
 	if runwayKey == "" {
 		panic("RUNWAY_API_KEY is not set")
 	}
+	jenAIKey := os.Getenv("JENAI_API_KEY")
+	if jenAIKey == "" {
+		panic("JENAI_API_KEY is not set")
+	}
 	// 2. components
 	s3Service, err := services.NewS3Service("aidol-contents")
 	if err != nil {
 		fmt.Println("Error initializing S3 service:", err)
 		return
 	}
+	openAIPainter := tools.NewOpenAIPainter(openAIKey)
 	openArtPainter := tools.NewOpenArtPainter(openArtKey)
 	elevenLabsVoiceActor := tools.NewElevenLabsVoiceActor(elevenLabsKey)
 	runwayVideoProducer := tools.NewRunwayVideoProducer(runwayKey)
+	jenAIProducer := tools.NewJENAIProducer(jenAIKey)
 
 	// ======= System Prompt Domain =======
 	// system prompts
@@ -172,17 +178,32 @@ func main() {
 		avatarPublicRG.GET("/contents/:content_type/:content_id", avatarController.GetOneAvatarContent)
 	}
 
+	// ** Avatar Content Creation API **
+	avatarContentCreationService := services.NewAvatarContentCreationService(
+		DB,
+		s3Service,
+		systemPromptService,
+		openAIPainter,
+		openArtPainter,
+		jenAIProducer,
+		runwayVideoProducer,
+	)
+	avatarContentCreationController := controllers.NewAvatarContentCreationController(avatarContentCreationService)
 	avatarCreationRG := r.Group("/avatar/:avatar_id/contents/create")
 	avatarCreationRG.Use(middleware.JWTAuthMiddleware())
 	{
 		// music : prompt -> create by one step
-		avatarCreationRG.POST("/music", nil)
-		avatarCreationRG.GET("/music/:creation_id/confirm", nil) // confirm with NFT
+		avatarCreationRG.POST("/music", avatarContentCreationController.StartMusicCreation)
+		avatarCreationRG.GET("/music", avatarContentCreationController.GetMusicCreations)
+		avatarCreationRG.GET("/music/:creation_id", avatarContentCreationController.GetOneMusicCreation)
+		avatarCreationRG.POST("/music/:creation_id/confirm", avatarContentCreationController.ConfirmAvatarMusic) // confirm with NFT
 
 		// video : prompt -> create by two step (1. image, 2. video)
-		avatarCreationRG.POST("/video/image", nil)
-		avatarCreationRG.POST("/video/image/:creation_id/create", nil)
-		avatarCreationRG.POST("/video/image/:creation_id/confirm", nil) // confirm with NFT
+		avatarCreationRG.POST("/video/image", avatarContentCreationController.StartVideoCreation)
+		avatarCreationRG.GET("/video", avatarContentCreationController.GetVideoCreations)
+		avatarCreationRG.GET("/video/:creation_id", avatarContentCreationController.GetOneVideoCreation)
+		avatarCreationRG.POST("/video/image/:creation_id/create", avatarContentCreationController.GetAllVideoCreations)
+		avatarCreationRG.POST("/video/image/:creation_id/confirm", avatarContentCreationController.ConfirmAvatarVideo) // confirm with NFT
 	}
 
 	r.Run(":8080")
