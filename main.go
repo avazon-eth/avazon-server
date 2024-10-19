@@ -50,7 +50,7 @@ func InitDB() *gorm.DB {
 
 func InitCORS(r *gin.Engine) {
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:8081", "https://gid.cast-ing.kr"},
+		AllowOrigins:     []string{"http://localhost:8081", "http://localhost:5173", "https://gid.cast-ing.kr"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-OAuth2-Token"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -76,6 +76,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	// Init validator
+	models.InitValidator()
 
 	// ======= Tools =======
 	// 1. keys

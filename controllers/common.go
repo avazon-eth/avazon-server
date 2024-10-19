@@ -4,6 +4,7 @@ import (
 	"avazon-api/controllers/errs"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -16,6 +17,8 @@ func HandleError(c *gin.Context, err error, message ...string) {
 	fmt.Printf("Controller returns error: %v\n", err)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		errs.SendErrorResponse(c, errs.ErrNotFound)
+	} else if errors.Is(err, io.EOF) {
+		errs.SendErrorResponse(c, errs.ErrBadRequest)
 	} else if errors.Is(err, errs.ErrInvalidStatus) {
 		errs.SendErrorResponse(c, errs.ErrInvalidStatus)
 	} else if appErr, ok := err.(errs.AppError); ok {

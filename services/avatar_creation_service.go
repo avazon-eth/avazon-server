@@ -125,7 +125,7 @@ func (s *AvatarCreateService) GetOneSession(userID uint, avatarCreationID string
 		Preload("VoiceCreations", func(db *gorm.DB) *gorm.DB {
 			return db.Order("created_at DESC")
 		}).
-		Where("id = ?", avatarCreationID).
+		Where("id = ? AND user_id = ?", avatarCreationID, userID).
 		First(&avatarCreation).Error; err != nil {
 		return models.AvatarCreation{}, err
 	}
@@ -544,15 +544,6 @@ func (ss *AvatarCreateSession) CreateImage(summary string) (<-chan models.Avatar
 	return imageCreationChan, nil
 }
 
-func (s *AvatarCreateService) CreateImageByRequest(userID uint, creationID string, userReq string) error {
-	session, ok := s.sessions[creationID]
-	if !ok || session.session.UserID != userID {
-		return errs.ErrNotFound
-	}
-	_, err := session.CreateImage(userReq)
-	return err
-}
-
 // create character from character chattings.
 // if current character creation exists, edit it.
 func (ss *AvatarCreateSession) CreateCharacter() (<-chan models.AvatarCharacterCreation, error) {
@@ -622,25 +613,6 @@ func (ss *AvatarCreateSession) CreateCharacter() (<-chan models.AvatarCharacterC
 	}()
 
 	return characterCreationChan, nil
-}
-
-func (s *AvatarCreateService) CreateCharacterByRequest(userID uint, creationID string, userReq string) error {
-	session, ok := s.sessions[creationID]
-	if !ok || session.session.UserID != userID {
-		return errs.ErrNotFound
-	}
-	_, doneCh, errCh := session.HandleCharacterChat(userReq)
-
-	select {
-	case <-doneCh:
-		_, err := session.CreateCharacter()
-		if err != nil {
-			return err
-		}
-	case err := <-errCh:
-		return err
-	}
-	return errs.ErrInternalServerError
 }
 
 // create voice from voice chattings.
@@ -749,25 +721,109 @@ func (ss *AvatarCreateSession) CreateVoice(summary string, gender string, accent
 	return voiceCreationChan, nil
 }
 
-// func (s *AvatarCreateService) CreateVoiceByRequest(userID uint, creationID string, userReq string) error {
-// 	session, ok := s.sessions[creationID]
-// 	if !ok || session.session.UserID != userID {
-// 		return errs.ErrNotFound
-// 	}
+func (s *AvatarCreateService) CreateImageByRequest(userID uint, creationID string, userReq string) error {
+	var avatarCreation models.AvatarCreation
+	s.tools.DB.First(&avatarCreation, "id=?", creationID)
+	if avatarCreation.UserID != userID {
+		return errs.ErrNotFound
+	}
+	imageCreation := &models.AvatarImageCreation{
+		AvatarCreationID: creationID,
+		AvatarCreation:   avatarCreation,
+		Prompt:           userReq,
+		Status:           models.AC_Ready,
+	}
+	s.tools.DB.Create(&imageCreation)
 
-// }
+	go func() {
+		imagePrompt := userReq
+		imagePrompt, err := s.tools.Painter.EnhancePrompt(imagePrompt)
+		if err != nil {
+			log.Println("Failed to enhance image prompt:", err)
+			imageCreation.Status = models.AC_Failed
+			imageCreation.FailedReason = err.Error()
+			s.tools.DB.Save(&imageCreation)
+			return
+		}
+
+		imageCreation.Status = models.AC_Processing
+		imageCreation.Prompt = imagePrompt
+		s.tools.DB.Save(&imageCreation)
+
+		imageBytes, mimeType, err := s.tools.Painter.Paint(imagePrompt, "", 682, 1024)
+		if err != nil {
+			log.Println("Failed to paint image:", err)
+			imageCreation.Status = models.AC_Failed
+			imageCreation.FailedReason = err.Error()
+			s.tools.DB.Save(&imageCreation)
+			return
+		}
+
+		extension, err := utils.GetExtensionFromMimeType(mimeType)
+		if err != nil {
+			log.Println("Failed to get extension from mime type:", err)
+			imageCreation.Status = models.AC_Failed
+			imageCreation.FailedReason = err.Error()
+			s.tools.DB.Save(&imageCreation)
+			return
+		}
+		fileName := fmt.Sprintf("%s_image_%d%s", imageCreation.AvatarCreationID, imageCreation.ID, extension)
+		imageURL, err := s.tools.S3Service.UploadPublicFile(context.TODO(), fileName, imageBytes, mimeType)
+		if err != nil {
+			log.Println("Failed to upload image to S3:", err)
+			imageCreation.Status = models.AC_Failed
+			imageCreation.FailedReason = err.Error()
+			s.tools.DB.Save(&imageCreation)
+			return
+		}
+
+		imageCreation.ImageURL = imageURL
+		imageCreation.Status = models.AC_Completed
+		s.tools.DB.Save(&imageCreation)
+	}()
+
+	return nil
+}
+
+func (s *AvatarCreateService) CreateCharacterByRequest(userID uint, creationID string, userReq string) error {
+	session, ok := s.sessions[creationID]
+	if !ok || session.session.UserID != userID {
+		return errs.ErrNotFound
+	}
+	_, doneCh, errCh := session.HandleCharacterChat(userReq)
+
+	select {
+	case <-doneCh:
+		_, err := session.CreateCharacter()
+		if err != nil {
+			return err
+		}
+	case err := <-errCh:
+		return err
+	}
+	return errs.ErrInternalServerError
+}
+
+func (s *AvatarCreateService) CreateVoiceByRequest(userID uint, creationID string, dto dto.AvatarVoiceCreationRequest) error {
+	session, ok := s.sessions[creationID]
+	if !ok || session.session.UserID != userID {
+		return errs.ErrNotFound
+	}
+	_, err := session.CreateVoice(dto.Summary, string(dto.Gender), dto.AccentStrength, dto.Age, dto.Accent)
+	return err
+}
 
 // don't use this. CreateCharacter() will handle this.
-// // edit character from character chattings
-// func (ss *AvatarCreateSession) EditCharacter() error {
-// 	return nil
-// }
+// edit character from character chattings
+func (ss *AvatarCreateSession) EditCharacter() error {
+	return nil
+}
 
 // don't use this. CreateVoice() will handle this.
-// // edit voice from voice chattings
-// func (ss *AvatarCreateSession) EditVoice() error {
-// 	return nil
-// }
+// edit voice from voice chattings
+func (ss *AvatarCreateSession) EditVoice() error {
+	return nil
+}
 
 func (ss *AvatarCreateSession) ResponseAfterToolCalled(objectType string, message string, toolCallName string, toolCallArguments string, toolCallId string) (output chan string, done chan string, err chan error) {
 	go func() {

@@ -68,7 +68,7 @@ func (ctrl *AvatarCreationController) StartCreation(c *gin.Context) {
 
 // used for tracking how the session is going
 func (ctrl *AvatarCreationController) GetOneSession(c *gin.Context) {
-	avatarCreationID := c.Param("id")
+	avatarCreationID := c.Param("creation_id")
 	userID, ok := utils.GetUserID(c)
 	if !ok {
 		HandleError(c, errs.ErrUnauthorized)
@@ -103,17 +103,43 @@ func (ctrl *AvatarCreationController) CreateAvatarImage(c *gin.Context) {
 }
 
 func (ctrl *AvatarCreationController) CreateAvatarCharacter(c *gin.Context) {
-	// creationID := c.Param("creation_id")
-	// userID, ok := utils.GetUserID(c)
-	// if !ok {
-	// 	HandleError(c, errs.ErrUnauthorized)
-	// 	return
-	// }
-
+	creationID := c.Param("creation_id")
+	userID, ok := utils.GetUserID(c)
+	if !ok {
+		HandleError(c, errs.ErrUnauthorized)
+		return
+	}
+	var req dto.AvatarCharacterCreationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		HandleError(c, err)
+		return
+	}
+	err := ctrl.AvatarCreationService.CreateCharacterByRequest(userID, creationID, req.Summary)
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Character creation started"})
 }
 
 func (ctrl *AvatarCreationController) CreateAvatarVoice(c *gin.Context) {
-
+	creationID := c.Param("creation_id")
+	userID, ok := utils.GetUserID(c)
+	if !ok {
+		HandleError(c, errs.ErrUnauthorized)
+		return
+	}
+	var req dto.AvatarVoiceCreationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		HandleError(c, err)
+		return
+	}
+	err := ctrl.AvatarCreationService.CreateVoiceByRequest(userID, creationID, req)
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Voice creation started"})
 }
 
 func (ctrl *AvatarCreationController) CreateAvatar(c *gin.Context) {
@@ -151,7 +177,7 @@ type AvatarCreateResponse struct {
 // GET /avatar/create/:id/enter/
 // websocket upgrade here
 func (ctrl *AvatarCreationController) EnterSession(c *gin.Context) {
-	avatarCreationID := c.Param("id")
+	avatarCreationID := c.Param("creation_id")
 	userID, ok := utils.GetUserID(c)
 	if !ok {
 		HandleError(c, errs.ErrUnauthorized)
