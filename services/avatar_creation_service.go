@@ -786,31 +786,98 @@ func (s *AvatarCreateService) CreateImageByRequest(userID uint, creationID strin
 }
 
 func (s *AvatarCreateService) CreateCharacterByRequest(userID uint, creationID string, userReq string) error {
-	session, ok := s.sessions[creationID]
-	if !ok || session.session.UserID != userID {
+	var avatarCreation models.AvatarCreation
+	s.tools.DB.First(&avatarCreation, "id=?", creationID)
+	if avatarCreation.UserID != userID {
 		return errs.ErrNotFound
 	}
-	_, doneCh, errCh := session.HandleCharacterChat(userReq)
 
-	select {
-	case <-doneCh:
-		_, err := session.CreateCharacter()
-		if err != nil {
-			return err
-		}
-	case err := <-errCh:
+	characterPrompt, err := s.tools.PromptService.Use(AG_AvatarCharacterCreation, userReq)
+	if err != nil {
 		return err
 	}
-	return errs.ErrInternalServerError
+
+	characterCreation := &models.AvatarCharacterCreation{
+		AvatarCreationID: creationID,
+		AvatarCreation:   avatarCreation,
+		Prompt:           characterPrompt,
+		Content:          characterPrompt,
+		Status:           models.AC_Completed,
+	}
+	s.tools.DB.Create(&characterCreation)
+
+	return nil
 }
 
-func (s *AvatarCreateService) CreateVoiceByRequest(userID uint, creationID string, dto dto.AvatarVoiceCreationRequest) error {
-	session, ok := s.sessions[creationID]
-	if !ok || session.session.UserID != userID {
+func (s *AvatarCreateService) CreateVoiceByRequest(userID uint, creationID string, req dto.AvatarVoiceCreationRequest) error {
+	var avatarCreation models.AvatarCreation
+	s.tools.DB.First(&avatarCreation, "id=?", creationID)
+	if avatarCreation.UserID != userID {
 		return errs.ErrNotFound
 	}
-	_, err := session.CreateVoice(dto.Summary, string(dto.Gender), dto.AccentStrength, dto.Age, dto.Accent)
-	return err
+
+	voiceCreation := &models.AvatarVoiceCreation{
+		AvatarCreationID: creationID,
+		AvatarCreation:   avatarCreation,
+		Status:           models.AC_Ready,
+	}
+
+	go func() {
+		voiceCreation.Status = models.AC_Processing
+		s.tools.DB.Save(voiceCreation)
+
+		// 1. generate voice prompt
+		var prompt string
+		var err error
+		prompt, err = s.tools.PromptService.Use(AG_AvatarVoiceCreation, req.Summary)
+		if err != nil {
+			log.Println("Failed to create voice:", err)
+			voiceCreation.Status = models.AC_Failed
+			voiceCreation.FailedReason = err.Error()
+			s.tools.DB.Save(voiceCreation)
+			return
+		}
+		voiceCreation.Prompt = prompt
+
+		// 2. generate voice
+		_, voiceId, err := s.tools.VoiceActor.Create(voiceCreation.Prompt, models.Gender(req.Gender), req.AccentStrength, req.Age, req.Accent)
+		if err != nil {
+			log.Println("Failed to create voice:", err)
+			voiceCreation.Status = models.AC_Failed
+			voiceCreation.FailedReason = err.Error()
+			s.tools.DB.Save(voiceCreation)
+			return
+		}
+
+		// 3. create TTS and save to S3
+		introduction, err := s.tools.PromptService.Use(AG_AvatarIntroduce, avatarCreation.GetBasicInfo())
+		if err != nil {
+			log.Println("Failed to create introduction:", err)
+			introduction = "Hello! I am your avatar. How are you?"
+		}
+		voiceBytes, err := s.tools.VoiceActor.TTS(voiceId, introduction)
+		if err != nil {
+			log.Println("Failed to create voice:", err)
+			voiceCreation.Status = models.AC_Failed
+			voiceCreation.FailedReason = err.Error()
+			s.tools.DB.Save(voiceCreation)
+			return
+		}
+		fileName := fmt.Sprintf("%s_voice_%d.%s", voiceCreation.AvatarCreationID, voiceCreation.ID, "mp3")
+		voiceURL, err := s.tools.S3Service.UploadPublicFile(context.TODO(), fileName, voiceBytes, "audio/mpeg")
+		if err != nil {
+			log.Println("Failed to upload voice to S3:", err)
+			voiceCreation.Status = models.AC_Failed
+			voiceCreation.FailedReason = err.Error()
+			s.tools.DB.Save(voiceCreation)
+			return
+		}
+		voiceCreation.VoiceURL = voiceURL
+		voiceCreation.Status = models.AC_Completed
+		s.tools.DB.Save(voiceCreation)
+	}()
+
+	return nil
 }
 
 // don't use this. CreateCharacter() will handle this.

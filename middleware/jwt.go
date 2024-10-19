@@ -2,8 +2,12 @@ package middleware
 
 import (
 	"crypto/rsa"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"avazon-api/models"
@@ -99,6 +103,39 @@ func ValidateJWT(tokenString string) (*jwt.Token, error) {
 		}
 		return publicKey, nil
 	})
+}
+
+func ExtractJWT(tokenString string) (*jwt.Token, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return publicKey, nil
+	})
+
+	if err != nil && !errors.Is(err, jwt.ErrTokenExpired) {
+		return nil, err
+	}
+	return token, nil
+}
+
+func ExtractPayload(jwtToken string) (map[string]interface{}, error) {
+	parts := strings.Split(jwtToken, ".")
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("invalid JWT token format")
+	}
+
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return nil, fmt.Errorf("error decoding payload: %v", err)
+	}
+
+	var payloadData map[string]interface{}
+	if err := json.Unmarshal(payload, &payloadData); err != nil {
+		return nil, fmt.Errorf("error unmarshalling payload: %v", err)
+	}
+
+	return payloadData, nil
 }
 
 // Extract userId from JWT token string

@@ -93,15 +93,15 @@ func (ctrl *UserController) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	accessToken, err := middleware.ValidateJWT(tokenDTO.AccessToken)
-	if err != nil || !accessToken.Valid {
+	accessTokenPayload, err := middleware.ExtractPayload(tokenDTO.AccessToken)
+	accessTokenType, ok := accessTokenPayload["type"].(string)
+	if !ok || accessTokenType != "access" {
 		log.Printf("Invalid access token: %v", err)
 		HandleError(c, errs.ErrInvalidJWT)
 		return
 	}
-
-	accessTokenUserID, err := middleware.GetUserIDFromTokenString(tokenDTO.AccessToken)
-	if err != nil {
+	accessTokenUserID, ok := accessTokenPayload["sub"].(float64)
+	if !ok {
 		log.Printf("Invalid access token: %v", err)
 		HandleError(c, errs.ErrInvalidJWT)
 		return
@@ -118,7 +118,7 @@ func (ctrl *UserController) RefreshToken(c *gin.Context) {
 		HandleError(c, errs.ErrInvalidJWT)
 		return
 	}
-	if accessTokenUserID != refreshTokenUserID {
+	if uint(accessTokenUserID) != refreshTokenUserID {
 		log.Printf("Refresh token mismatch: %v", err)
 		HandleError(c, errs.ErrRefreshMismatch)
 		return
@@ -131,19 +131,14 @@ func (ctrl *UserController) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	userRole, err := middleware.GetUserRoleFromTokenString(tokenDTO.AccessToken)
-	if userRole == nil {
-		log.Printf("Cannot get user role from token: %v", err)
-		HandleError(c, errs.ErrInvalidJWT)
-		return
-	}
-	if err != nil {
+	userRole, ok := accessTokenPayload["scope"].(string)
+	if !ok || userRole == "" || userRole == "refresh" {
 		log.Printf("Cannot get user role from token: %v", err)
 		HandleError(c, errs.ErrInvalidJWT)
 		return
 	}
 
-	accessJWT, err := middleware.GenerateJWT(userID, "access", 30, string(*userRole))
+	accessJWT, err := middleware.GenerateJWT(userID, "access", 60*24*30, userRole)
 	if err != nil {
 		log.Printf("Cannot generate access token: %v", err)
 		HandleError(c, errs.ErrInternalServerError)

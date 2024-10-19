@@ -150,6 +150,11 @@ func (ctrl *AvatarCreationController) CreateAvatar(c *gin.Context) {
 		return
 	}
 	avatarID := c.Query("avatar_id")
+	if avatarID == "" {
+		HandleError(c, errs.ErrBadRequest)
+		return
+	}
+
 	avatar, err := ctrl.AvatarCreationService.CreateAvatar(userID, avatarCreationID, avatarID)
 	if err != nil {
 		HandleError(c, err)
