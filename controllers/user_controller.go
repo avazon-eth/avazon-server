@@ -44,7 +44,7 @@ func (ctrl *UserController) OAuth2Login(c *gin.Context) {
 			HandleError(c, err)
 			return
 		}
-		accessToken, err := middleware.GenerateJWT(user.ID, "access", 30, string(user.Role)) // 30 minutes
+		accessToken, err := middleware.GenerateJWT(user.ID, "access", 60*24*30, string(user.Role)) // 30 days
 		if err != nil {
 			HandleError(c, err)
 			return
