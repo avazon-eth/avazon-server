@@ -14,6 +14,14 @@ Avazon is your ultimate partner in unleashing creativity for multimedia content 
 - **Asynchronous Processing**: Utilize Celery for efficient background task processing.
 - **Real-time Interaction**: Engage in real-time interactions with the Avatar, making the content creation process more dynamic and enjoyable.
 
+## What You Can Do with This API
+
+![Avatar Creation](https://avazon.s3.us-west-1.amazonaws.com/ppts/avatar_creation.png)
+
+1. **Create Avatars**: Use the API to generate unique avatars that represent you or your creative ideas.
+2. **Enjoy and Create Avatar Content**: Engage with the content created by your avatars, whether it's music, videos, or images, and create new content effortlessly.
+3. **Remix Each Other's Avatars**: Collaborate with others by remixing their avatars, allowing for a dynamic and interactive creative experience.
+
 ## Frameworks & Tools
 
 - **Go**: The backend is built with Go, providing a robust and efficient runtime environment. It must be version 1.22 or higher.
