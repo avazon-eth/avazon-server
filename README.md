@@ -2,6 +2,8 @@
 
 # Avazon API Server
 
+[You can try here!](https://avazon.cast-ing.kr)
+
 Avazon is your ultimate partner in unleashing creativity for multimedia content creation. The Avatar acts as a unique agent, enhancing user interaction with the platform. Whether you're creating mesmerizing music tracks, generating captivating videos, or remixing stunning images, the Avazon API has everything you need. By leveraging cutting-edge third-party APIs, we provide a comprehensive toolkit designed for passionate content creators.
 
 ## Features
