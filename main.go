@@ -190,7 +190,7 @@ func main() {
 		avatarCreateRG.POST("/:creation_id/character", avatarCreationController.CreateAvatarCharacter)
 		avatarCreateRG.POST("/:creation_id/voice", avatarCreationController.CreateAvatarVoice)
 	}
-	avatarCreateRG.GET("/:creation_id/enter", avatarCreationController.EnterSession) // Websocket exchange
+	avatarCreateRG.GET("/:creation_id/enter/", avatarCreationController.EnterSession) // Websocket exchange
 
 	// ** Avatar Public API **
 	avatarService := services.NewAvatarService(DB)
