@@ -32,6 +32,7 @@ var upgrader = websocket.Upgrader{
 			"http://localhost:8081",
 			"https://gid.cast-ing.kr",
 			"https://staging.d9xje8vs9f8su.amplifyapp.com",
+			"https://avazon.cast-ing.kr",
 		}
 
 		origin := r.Header.Get("Origin")

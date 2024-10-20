@@ -1,8 +1,10 @@
 package services
 
 import (
+	"avazon-api/controllers/errs"
 	"avazon-api/models"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,11 +15,12 @@ import (
 )
 
 type UserService struct {
-	DB *gorm.DB
+	DB            *gorm.DB
+	DWUserService *DynamicWalletUserService
 }
 
-func NewUserService(db *gorm.DB) *UserService {
-	return &UserService{DB: db}
+func NewUserService(db *gorm.DB, dwUserService *DynamicWalletUserService) *UserService {
+	return &UserService{DB: db, DWUserService: dwUserService}
 }
 func (s *UserService) GetUserGoogleAccessTokenByAuthorizationCode(code string) (string, error) {
 	// Google OAuth2 token endpoint
@@ -132,18 +135,26 @@ func (s *UserService) GetUserGoogleAccessTokenByAuthorizationCode(code string) (
 
 func (s *UserService) GetUserByID(userID string) (*models.User, error) {
 	var user models.User
-	if err := s.DB.Where("id = ?", userID).Find(&user).Error; err != nil {
+	if err := s.DB.Where("id = ?", userID).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
 }
 
 func (s *UserService) GetUserByIDCreateIfNotExists(userID string) (*models.User, error) {
-	var user models.User
-	if err := s.DB.
-		Where("id = ?", userID).
-		FirstOrCreate(&user, models.User{ID: userID, Role: "user"}).Error; err != nil {
-		return nil, err
+	user, err := s.GetUserByID(userID)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		dwUser, err := s.DWUserService.GetDWUserByID(userID)
+		if err != nil {
+			return nil, err
+		}
+		dwUser.Role = "user"
+		s.DB.Create(dwUser)
+		return dwUser, nil
+	} else if user != nil {
+		return user, nil
+	} else {
+		return nil, errs.ErrUnauthorized
 	}
-	return &user, nil
 }

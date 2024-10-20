@@ -52,7 +52,7 @@ func InitDB() *gorm.DB {
 
 func InitCORS(r *gin.Engine) {
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:8081", "http://localhost:5173", "https://gid.cast-ing.kr", "https://staging.d9xje8vs9f8su.amplifyapp.com"},
+		AllowOrigins:     []string{"http://localhost:8081", "http://localhost:5173", "https://gid.cast-ing.kr", "https://staging.d9xje8vs9f8su.amplifyapp.com", "https://avazon.cast-ing.kr"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-OAuth2-Token"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -162,7 +162,8 @@ func main() {
 	}
 
 	// ======= User Domain =======
-	userService := services.NewUserService(DB)
+	dwUserService := services.NewDynamicWalletUserService(os.Getenv("DW_LIVE_KEY"))
+	userService := services.NewUserService(DB, dwUserService)
 	userController := controllers.NewUserController(userService)
 	userRG := r.Group("/users")
 	// userRG.POST("/oauth2/:provider", userController.OAuth2Login)
