@@ -18,6 +18,7 @@ func (s *AvatarService) GetAvatars(page int, limit int) ([]models.Avatar, error)
 	var avatars []models.Avatar
 	if err := s.DB.
 		Model(&models.Avatar{}).
+		Preload("User").
 		Limit(limit).
 		Offset(page * limit).
 		Order("created_at DESC").
@@ -77,6 +78,8 @@ func (s *AvatarService) GetAvatarMusicContents(avatarID *string, page int, limit
 	}
 
 	if err := q.
+		Preload("User").
+		Preload("Avatar").
 		Limit(limit).
 		Offset(page * limit).
 		Order("created_at DESC").
@@ -107,6 +110,8 @@ func (s *AvatarService) GetAvatarVideoContents(avatarID *string, page int, limit
 	}
 
 	if err := q.
+		Preload("User").
+		Preload("Avatar").
 		Limit(limit).
 		Offset(page * limit).
 		Order("created_at DESC").
