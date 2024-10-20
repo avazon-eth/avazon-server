@@ -22,8 +22,8 @@ Avazon is your ultimate partner in unleashing creativity for multimedia content 
 2. **Enjoy and Create Avatar Content**: Engage with the content created by your avatars, whether it's music, videos, or images, and create new content effortlessly. [Video](https://avazon.s3.us-west-1.amazonaws.com/ppts/video_creation.png)
 
    <div style="display: flex; justify-content: space-around; height: 300px;">
-       <img src="https://avazon.s3.us-west-1.amazonaws.com/ppts/remixed_original.png" alt="Original Avatar" style="height: 100%;"/>
-       <img src="https://avazon.s3.us-west-1.amazonaws.com/ppts/remixed.png" alt="Remixed Avatar" style="height: 100%;"/>
+       <img src="https://avazon.s3.us-west-1.amazonaws.com/ppts/remixed_original.png" alt="Original Avatar" style="width: 40%;"/>
+       <img src="https://avazon.s3.us-west-1.amazonaws.com/ppts/remixed.png" alt="Remixed Avatar" style="width: 40%;"/>
    </div>
 
 3. **Remix Each Other's Avatars**: Collaborate with others by remixing their avatars, allowing for a dynamic and interactive creative experience. The above images showcase a remixed avatar alongside its original version, highlighting the creative transformations possible with the Avazon API.
