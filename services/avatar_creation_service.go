@@ -75,7 +75,7 @@ type AvatarCreateTools struct {
 	S3Service     *S3Service
 }
 
-func (s *AvatarCreateService) StartCreation(userID uint, req dto.AvatarCreationRequest) (models.AvatarCreation, error) {
+func (s *AvatarCreateService) StartCreation(userID string, req dto.AvatarCreationRequest) (models.AvatarCreation, error) {
 	var existingCreation models.AvatarCreation
 	s.tools.DB.Where("user_id = ? and status = ?", userID, models.AC_Processing).First(&existingCreation)
 	if existingCreation.ID != "" {
@@ -113,7 +113,7 @@ func (s *AvatarCreateService) StartCreation(userID uint, req dto.AvatarCreationR
 // Returns:
 //   - models.AvatarCreation: The retrieved avatar creation session.
 //   - error: An error object if any error occurs during the retrieval process.
-func (s *AvatarCreateService) GetOneSession(userID uint, avatarCreationID string) (models.AvatarCreation, error) {
+func (s *AvatarCreateService) GetOneSession(userID string, avatarCreationID string) (models.AvatarCreation, error) {
 	var avatarCreation models.AvatarCreation
 	if err := s.tools.DB.
 		Preload("ImageCreations", func(db *gorm.DB) *gorm.DB {
@@ -146,7 +146,7 @@ func (s *AvatarCreateService) GetCreateSessionChat(avatarCreationID string, obje
 }
 
 // avatarID is for hashed NFT key
-func (s *AvatarCreateService) CreateAvatar(userID uint, avatarCreationID string, avatarID string) (models.Avatar, error) {
+func (s *AvatarCreateService) CreateAvatar(userID string, avatarCreationID string, avatarID string) (models.Avatar, error) {
 	var existingAvatar models.Avatar
 	s.tools.DB.Where("avatar_creation_id = ? AND user_id = ?", avatarCreationID, userID).First(&existingAvatar)
 	if existingAvatar.ID != "" {
@@ -221,7 +221,7 @@ func (s *AvatarCreateService) CreateAvatar(userID uint, avatarCreationID string,
 	return avatar, nil
 }
 
-func (s *AvatarCreateService) EnterSession(userID uint, sessionID string) (*AvatarCreateSession, error) {
+func (s *AvatarCreateService) EnterSession(userID string, sessionID string) (*AvatarCreateSession, error) {
 	session, ok := s.sessions[sessionID]
 	// if not exists, create new room
 	if !ok {
@@ -360,7 +360,7 @@ func (s *AvatarCreateService) EnterSession(userID uint, sessionID string) (*Avat
 	return session, nil
 }
 
-func (s *AvatarCreateService) CloseSession(userID uint, sessionID string) {
+func (s *AvatarCreateService) CloseSession(userID string, sessionID string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.sessions, sessionID)
@@ -722,7 +722,7 @@ func (ss *AvatarCreateSession) CreateVoice(summary string, gender string, accent
 	return voiceCreationChan, nil
 }
 
-func (s *AvatarCreateService) CreateImageByRequest(userID uint, creationID string, userReq string) error {
+func (s *AvatarCreateService) CreateImageByRequest(userID string, creationID string, userReq string) error {
 	var avatarCreation models.AvatarCreation
 	s.tools.DB.First(&avatarCreation, "id=?", creationID)
 	if avatarCreation.UserID != userID {
@@ -786,7 +786,7 @@ func (s *AvatarCreateService) CreateImageByRequest(userID uint, creationID strin
 	return nil
 }
 
-func (s *AvatarCreateService) CreateCharacterByRequest(userID uint, creationID string, userReq string) error {
+func (s *AvatarCreateService) CreateCharacterByRequest(userID string, creationID string, userReq string) error {
 	var avatarCreation models.AvatarCreation
 	s.tools.DB.First(&avatarCreation, "id=?", creationID)
 	if avatarCreation.UserID != userID {
@@ -811,7 +811,7 @@ func (s *AvatarCreateService) CreateCharacterByRequest(userID uint, creationID s
 	return nil
 }
 
-func (s *AvatarCreateService) CreateVoiceByRequest(userID uint, creationID string, req dto.AvatarVoiceCreationRequest) error {
+func (s *AvatarCreateService) CreateVoiceByRequest(userID string, creationID string, req dto.AvatarVoiceCreationRequest) error {
 	var avatarCreation models.AvatarCreation
 	s.tools.DB.First(&avatarCreation, "id=?", creationID)
 	if avatarCreation.UserID != userID {

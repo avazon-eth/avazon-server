@@ -4,7 +4,7 @@ import "time"
 
 type Avatar struct {
 	ID               string         `json:"id" gorm:"primary_key;type:varchar(255 )"`
-	UserID           uint           `json:"user_id"`
+	UserID           string         `json:"user_id" gorm:"type:varchar(255)"`
 	User             User           `json:"user" gorm:"foreignKey:UserID"`
 	AvatarCreationID string         `json:"-" gorm:"type:varchar(255)"`
 	AvatarCreation   AvatarCreation `json:"-" gorm:"foreignKey:AvatarCreationID"`
@@ -25,7 +25,7 @@ type Avatar struct {
 
 type AvatarRemixImage struct {
 	ID        int       `json:"id" gorm:"primary_key;auto_increment"`
-	UserID    uint      `json:"user_id"`
+	UserID    string    `json:"user_id" gorm:"type:varchar(255)"`
 	User      User      `json:"-" gorm:"foreignKey:UserID"`
 	AvatarID  string    `json:"avatar_id" gorm:"not null;foreignKey:AvatarCreationID;constraint:OnDelete:CASCADE"`
 	Avatar    Avatar    `json:"-" gorm:"foreignKey:AvatarCreationID;constraint:OnDelete:CASCADE"`

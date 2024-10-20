@@ -35,7 +35,7 @@ func (s *AvatarRemixService) updateImageRemixStatus(avatarImageRemix *models.Ava
 	s.DB.Save(avatarImageRemix)
 }
 
-func (s *AvatarRemixService) StartImageRemix(userID uint, avatarID string, request dto.AvatarImageRemixRequest) (*models.AvatarImageRemix, error) {
+func (s *AvatarRemixService) StartImageRemix(userID string, avatarID string, request dto.AvatarImageRemixRequest) (*models.AvatarImageRemix, error) {
 	var avatar models.Avatar
 	if err := s.DB.Where("id = ?", avatarID).
 		Preload("User").
@@ -89,7 +89,7 @@ func (s *AvatarRemixService) StartImageRemix(userID uint, avatarID string, reque
 	return &avatarImageRemix, nil
 }
 
-func (s *AvatarRemixService) GetOneImageRemix(userID uint, avatarID string, remixID string) (*models.AvatarImageRemix, error) {
+func (s *AvatarRemixService) GetOneImageRemix(userID string, avatarID string, remixID string) (*models.AvatarImageRemix, error) {
 	var avatarImageRemix models.AvatarImageRemix
 	if err := s.DB.
 		Where("id = ? AND user_id = ? AND avatar_id = ?", remixID, userID, avatarID).
@@ -99,7 +99,7 @@ func (s *AvatarRemixService) GetOneImageRemix(userID uint, avatarID string, remi
 	return &avatarImageRemix, nil
 }
 
-func (s *AvatarRemixService) ConfirmAvatarFromImageRemix(userID uint, avatarID string, remixID string, newAvatarID string) (*models.Avatar, error) {
+func (s *AvatarRemixService) ConfirmAvatarFromImageRemix(userID string, avatarID string, remixID string, newAvatarID string) (*models.Avatar, error) {
 	var avatarImageRemix models.AvatarImageRemix
 	if err := s.DB.
 		Where("id = ? AND avatar_id = ? AND user_id = ?", remixID, avatarID, userID).

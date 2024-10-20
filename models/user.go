@@ -10,14 +10,14 @@ const (
 )
 
 type User struct {
-	ID              uint      `json:"id" gorm:"primaryKey;autoIncrement"`
-	Username        string    `json:"username" gorm:"not null"`
-	Email           string    `json:"email" gorm:"not null;unique"`
-	ProfileImageURL string    `json:"profile_image_url"`
-	Password        string    `json:"-"`                                             // not null if not using oauth2
-	OAuth2Provider  string    `json:"oauth2_provider" gorm:"column:oauth2_provider"` // google
-	OAuth2ID        string    `json:"-" gorm:"column:oauth2_id"`
-	Role            UserRole  `json:"role" gorm:"not null"`
-	CreatedAt       time.Time `json:"created_at"`
-	EditedAt        time.Time `json:"-" gorm:"autoUpdateTime"`
+	ID string `json:"id" gorm:"primaryKey;type:varchar(255)"`
+	// Username        string    `json:"username" gorm:"not null;type:varchar(255)"`
+	// Email           string    `json:"email" gorm:"not null;unique;type:varchar(255)"`
+	// ProfileImageURL string    `json:"profile_image_url" gorm:"type:varchar(255)"`
+	// Password        string    `json:"-" gorm:"type:varchar(255)"`                                 // not null if not using oauth2
+	// OAuth2Provider  string    `json:"oauth2_provider" gorm:"column:oauth2_provider;varchar(255)"` // google
+	// OAuth2ID        string    `json:"-" gorm:"column:oauth2_id;type:varchar(255)"`
+	Role      UserRole  `json:"role" gorm:"not null;type:varchar(255)"`
+	CreatedAt time.Time `json:"created_at"`
+	EditedAt  time.Time `json:"-" gorm:"autoUpdateTime"`
 }

@@ -28,7 +28,7 @@ func (s *AvatarService) GetAvatars(page int, limit int) ([]models.Avatar, error)
 	return avatars, nil
 }
 
-func (s *AvatarService) GetMyAvatars(userID uint, page int, limit int) ([]models.Avatar, error) {
+func (s *AvatarService) GetMyAvatars(userID string, page int, limit int) ([]models.Avatar, error) {
 	var avatars []models.Avatar
 	if err := s.DB.
 		Model(&models.Avatar{}).
@@ -50,7 +50,7 @@ func (s *AvatarService) GetAvatarsCount() (int64, error) {
 	return count, nil
 }
 
-func (s *AvatarService) GetMyAvatarsCount(userID uint) (int64, error) {
+func (s *AvatarService) GetMyAvatarsCount(userID string) (int64, error) {
 	var count int64
 	if err := s.DB.Model(&models.Avatar{}).Where("user_id = ?", userID).Count(&count).Error; err != nil {
 		return 0, err
@@ -164,7 +164,7 @@ func (s *AvatarService) GetAvatarVideoContentsCount(avatarID *string) (int64, er
 	return count, nil
 }
 
-func (s *AvatarService) GetMyAvatarMusicContents(userID uint, page int, limit int) ([]models.AvatarMusic, error) {
+func (s *AvatarService) GetMyAvatarMusicContents(userID string, page int, limit int) ([]models.AvatarMusic, error) {
 	var avatarMusicContents []models.AvatarMusic
 	if err := s.DB.
 		Model(&models.AvatarMusic{}).
@@ -180,7 +180,7 @@ func (s *AvatarService) GetMyAvatarMusicContents(userID uint, page int, limit in
 	return avatarMusicContents, nil
 }
 
-func (s *AvatarService) GetMyAvatarVideoContents(userID uint, page int, limit int) ([]models.AvatarVideo, error) {
+func (s *AvatarService) GetMyAvatarVideoContents(userID string, page int, limit int) ([]models.AvatarVideo, error) {
 	var avatarVideoContents []models.AvatarVideo
 	if err := s.DB.
 		Model(&models.AvatarVideo{}).
@@ -196,7 +196,7 @@ func (s *AvatarService) GetMyAvatarVideoContents(userID uint, page int, limit in
 	return avatarVideoContents, nil
 }
 
-func (s *AvatarService) GetMyAvatarMusicContentsCount(userID uint) (int64, error) {
+func (s *AvatarService) GetMyAvatarMusicContentsCount(userID string) (int64, error) {
 	var count int64
 	if err := s.DB.Model(&models.AvatarMusic{}).
 		Preload("User").
@@ -208,7 +208,7 @@ func (s *AvatarService) GetMyAvatarMusicContentsCount(userID uint) (int64, error
 	return count, nil
 }
 
-func (s *AvatarService) GetMyAvatarVideoContentsCount(userID uint) (int64, error) {
+func (s *AvatarService) GetMyAvatarVideoContentsCount(userID string) (int64, error) {
 	var count int64
 	if err := s.DB.Model(&models.AvatarVideo{}).
 		Preload("User").

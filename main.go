@@ -80,6 +80,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	err = middleware.InitDynamicWalletKey()
+	if err != nil {
+		panic(err)
+	}
 
 	// Init validator
 	models.InitValidator()
@@ -128,7 +132,7 @@ func main() {
 	)
 	systemPromptController := controllers.NewSystemPromptController(systemPromptService)
 	systemPromptRG := r.Group("/system/prompts")
-	systemPromptRG.Use(middleware.JWTAuthMiddleware("admin"))
+	systemPromptRG.Use(middleware.AdminAuthMiddleware())
 	{
 		systemPromptRG.POST("/:prompt_id", systemPromptController.CreateSystemPrompt)
 		systemPromptRG.GET("/", systemPromptController.GetAllSystemPrompts)
@@ -161,12 +165,12 @@ func main() {
 	userService := services.NewUserService(DB)
 	userController := controllers.NewUserController(userService)
 	userRG := r.Group("/users")
-	userRG.POST("/oauth2/:provider", userController.OAuth2Login)
-	userRG.Use(middleware.JWTAuthMiddleware("user", "admin"))
+	// userRG.POST("/oauth2/:provider", userController.OAuth2Login)
+	userRG.Use(middleware.JWTAuthMiddleware())
 	{
 		userRG.GET("/me", userController.GetMyInfo)
 	}
-	r.POST("/users/token/refresh", middleware.JWTAuthMiddleware("refresh"), userController.RefreshToken)
+	// r.POST("/users/token/refresh", middleware.JWTAuthMiddleware("refresh"), userController.RefreshToken)
 
 	// ======= Avatar Domain =======
 	// ** Avatar Creation API **

@@ -3,6 +3,7 @@ package middleware
 import (
 	"log"
 	"net/http"
+	"os"
 	"slices"
 	"strings"
 
@@ -24,7 +25,7 @@ func JWTAuthMiddleware(userRoles ...string) gin.HandlerFunc {
 		// Remove the "Bearer " prefix and extract the token
 		tokenString = strings.TrimPrefix(tokenString, "Bearer ")
 
-		token, err := ValidateJWT(tokenString)
+		token, err := ValidateDynamicWalletJWT(tokenString)
 		if err != nil || !token.Valid {
 			log.Println(err)
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
@@ -52,7 +53,7 @@ func JWTAuthMiddleware(userRoles ...string) gin.HandlerFunc {
 		}
 
 		// Store user_id in context
-		c.Set("user_id", userId) // uint
+		c.Set("user_id", userId)
 		// If the token is valid, proceed to the next handler.
 		c.Next()
 	}
@@ -68,6 +69,25 @@ func CORSMiddleware() gin.HandlerFunc {
 			c.AbortWithStatus(http.StatusOK)
 			return
 		}
+		c.Next()
+	}
+}
+
+func AdminAuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		keyString := c.GetHeader("Authorization")
+		if keyString == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
+			c.Abort()
+			return
+		}
+
+		if keyString != os.Getenv("ADMIN_KEY") {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid key"})
+			c.Abort()
+			return
+		}
+
 		c.Next()
 	}
 }

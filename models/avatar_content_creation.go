@@ -19,7 +19,7 @@ const (
 
 type AvatarMusicContentCreation struct {
 	ID                   string                      `json:"id" gorm:"primaryKey;varchar(36)"` // UUID
-	UserID               uint                        `json:"user_id"`
+	UserID               string                      `json:"user_id" gorm:"type:varchar(255)"`
 	User                 User                        `json:"-" gorm:"foreignKey:UserID"`
 	AvatarID             string                      `json:"avatar_id" gorm:"varchar(36);not null"`
 	Avatar               Avatar                      `json:"avatar" gorm:"foreignKey:AvatarID;"`
@@ -38,7 +38,7 @@ type AvatarMusicContentCreation struct {
 
 type AvatarVideoContentCreation struct {
 	ID       string `json:"id" gorm:"primaryKey;varchar(36)"` // UUID
-	UserID   uint   `json:"user_id"`
+	UserID   string `json:"user_id" gorm:"type:varchar(255)"`
 	User     User   `json:"-" gorm:"foreignKey:UserID"`
 	AvatarID string `json:"avatar_id" gorm:"varchar(36);not null"`
 	Avatar   Avatar `json:"avatar" gorm:"foreignKey:AvatarID;"`

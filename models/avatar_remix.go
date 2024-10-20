@@ -12,7 +12,7 @@ const (
 
 type AvatarImageRemix struct {
 	ID           string            `json:"id" gorm:"primary_key;type:varchar(36);not null"`
-	UserID       uint              `json:"user_id" gorm:"type:bigint;not null"`
+	UserID       string            `json:"user_id" gorm:"type:varchar(255);not null"`
 	User         User              `json:"user" gorm:"foreignKey:UserID"`
 	AvatarID     string            `json:"avatar_id" gorm:"type:varchar(255);not null"`
 	Avatar       Avatar            `json:"avatar" gorm:"foreignKey:AvatarID"`

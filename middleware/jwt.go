@@ -2,15 +2,9 @@ package middleware
 
 import (
 	"crypto/rsa"
-	"encoding/base64"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
-	"strings"
 	"time"
-
-	"avazon-api/models"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -51,14 +45,14 @@ func InitKeys() error {
 // GenerateJWT generates a JWT token using RSA (RS256)
 //
 // Parameters:
-//   - userId uint: The unique identifier of the user
+//   - userID string: The unique identifier of the user
 //   - tokenType string: The type of the token (e.g., "access", "refresh")
 //   - expireMin int: The expiration time of the token in minutes
 //
 // Returns:
 //   - string: The generated JWT token string
 //   - error: An error object if any error occurs during token generation
-func GenerateJWT(userId uint, tokenType string, expireMin int, scope string) (string, error) {
+func GenerateJWT(userID string, tokenType string, expireMin int, scope string) (string, error) {
 	// Ensure the keys are loaded
 	if privateKey == nil {
 		return "", fmt.Errorf("private key is not initialized")
@@ -66,7 +60,7 @@ func GenerateJWT(userId uint, tokenType string, expireMin int, scope string) (st
 
 	// Create the token claims
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"sub":   userId,
+		"sub":   userID,
 		"exp":   time.Now().Add(time.Minute * time.Duration(expireMin)).Unix(),
 		"type":  tokenType,
 		"scope": scope,
@@ -105,78 +99,78 @@ func ValidateJWT(tokenString string) (*jwt.Token, error) {
 	})
 }
 
-func ExtractJWT(tokenString string) (*jwt.Token, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return publicKey, nil
-	})
+// func ExtractJWT(tokenString string) (*jwt.Token, error) {
+// 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+// 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+// 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+// 		}
+// 		return publicKey, nil
+// 	})
 
-	if err != nil && !errors.Is(err, jwt.ErrTokenExpired) {
-		return nil, err
-	}
-	return token, nil
-}
+// 	if err != nil && !errors.Is(err, jwt.ErrTokenExpired) {
+// 		return nil, err
+// 	}
+// 	return token, nil
+// }
 
-func ExtractPayload(jwtToken string) (map[string]interface{}, error) {
-	parts := strings.Split(jwtToken, ".")
-	if len(parts) != 3 {
-		return nil, fmt.Errorf("invalid JWT token format")
-	}
+// func ExtractPayload(jwtToken string) (map[string]interface{}, error) {
+// 	parts := strings.Split(jwtToken, ".")
+// 	if len(parts) != 3 {
+// 		return nil, fmt.Errorf("invalid JWT token format")
+// 	}
 
-	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
-	if err != nil {
-		return nil, fmt.Errorf("error decoding payload: %v", err)
-	}
+// 	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+// 	if err != nil {
+// 		return nil, fmt.Errorf("error decoding payload: %v", err)
+// 	}
 
-	var payloadData map[string]interface{}
-	if err := json.Unmarshal(payload, &payloadData); err != nil {
-		return nil, fmt.Errorf("error unmarshalling payload: %v", err)
-	}
+// 	var payloadData map[string]interface{}
+// 	if err := json.Unmarshal(payload, &payloadData); err != nil {
+// 		return nil, fmt.Errorf("error unmarshalling payload: %v", err)
+// 	}
 
-	return payloadData, nil
-}
+// 	return payloadData, nil
+// }
 
-// Extract userId from JWT token string
-func GetUserIDFromTokenString(tokenString string) (uint, error) {
-	token, err := ValidateJWT(tokenString)
-	if err != nil {
-		return 0, err
-	}
-	userId, err := GetUserIDFromJWT(*token)
-	if err != nil {
-		return 0, err
-	}
-	return userId, nil
-}
+// // Extract userId from JWT token string
+// func GetUserIDFromTokenString(tokenString string) (uint, error) {
+// 	token, err := ValidateJWT(tokenString)
+// 	if err != nil {
+// 		return 0, err
+// 	}
+// 	userId, err := GetUserIDFromJWT(*token)
+// 	if err != nil {
+// 		return 0, err
+// 	}
+// 	return userId, nil
+// }
 
-func GetUserRoleFromTokenString(tokenString string) (*models.UserRole, error) {
-	token, err := ValidateJWT(tokenString)
-	if err != nil {
-		return nil, err
-	}
-	role, ok := token.Claims.(jwt.MapClaims)["scope"]
-	if !ok {
-		return nil, fmt.Errorf("invalid token: role not found")
-	}
-	roleString, ok := role.(string)
-	if !ok {
-		return nil, fmt.Errorf("invalid token: role not found")
-	}
-	userRole := models.UserRole(roleString)
-	return &userRole, nil
-}
+// func GetUserRoleFromTokenString(tokenString string) (*models.UserRole, error) {
+// 	token, err := ValidateJWT(tokenString)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	role, ok := token.Claims.(jwt.MapClaims)["scope"]
+// 	if !ok {
+// 		return nil, fmt.Errorf("invalid token: role not found")
+// 	}
+// 	roleString, ok := role.(string)
+// 	if !ok {
+// 		return nil, fmt.Errorf("invalid token: role not found")
+// 	}
+// 	userRole := models.UserRole(roleString)
+// 	return &userRole, nil
+// }
 
-func GetUserIDFromJWT(token jwt.Token) (uint, error) {
-	// Extract claims from the token
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		userId, ok := claims["sub"].(float64)
-		if !ok {
-			return 0, fmt.Errorf("invalid token: userId not found")
-		}
-		return uint(userId), nil
-	}
+// func GetUserIDFromJWT(token jwt.Token) (uint, error) {
+// 	// Extract claims from the token
+// 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+// 		userId, ok := claims["sub"].(float64)
+// 		if !ok {
+// 			return 0, fmt.Errorf("invalid token: userId not found")
+// 		}
+// 		return uint(userId), nil
+// 	}
 
-	return 0, fmt.Errorf("invalid token")
-}
+// 	return 0, fmt.Errorf("invalid token")
+// }

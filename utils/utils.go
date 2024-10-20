@@ -15,17 +15,17 @@ import (
 )
 
 // return 0: not exists, 1: not uint, other: uint
-func GetUserID(c *gin.Context) (uint, bool) {
+func GetUserID(c *gin.Context) (string, bool) {
 	// Assuming the user_id is stored in the request header or query parameter
 	userId, exists := c.Get("user_id")
 	if !exists {
-		return 0, false
+		return "", false
 	}
-	userIdUint, ok := userId.(uint)
+	userIdStr, ok := userId.(string)
 	if !ok {
-		return 1, false
+		return "", false
 	}
-	return userIdUint, true
+	return userIdStr, true
 }
 
 func GetUintParam(c *gin.Context, param string) (uint, error) {

@@ -16,7 +16,7 @@ const (
 
 type AvatarCreation struct {
 	ID                 string                     `json:"id" gorm:"primary_key;type:varchar(40);"` // UUID
-	UserID             uint                       `json:"user_id"`
+	UserID             string                     `json:"user_id" gorm:"type:varchar(255)"`
 	User               User                       `json:"-" gorm:"foreignKey:UserID"`
 	ImageCreations     []*AvatarImageCreation     `json:"images"`
 	CharacterCreations []*AvatarCharacterCreation `json:"characters"`
@@ -49,7 +49,7 @@ type AvatarCreationChat struct {
 
 type AvatarImageCreation struct {
 	ID               int                  `json:"id" gorm:"primary_key;auto_increment"`
-	UserID           uint                 `json:"user_id"`
+	UserID           string               `json:"user_id" gorm:"type:varchar(255)"`
 	User             User                 `json:"-" gorm:"foreignKey:UserID"`
 	AvatarCreationID string               `json:"avatar_creation_id" gorm:"not null;foreignKey:AvatarCreationID;constraint:OnDelete:CASCADE"`
 	AvatarCreation   AvatarCreation       `json:"-" gorm:"foreignKey:AvatarCreationID;constraint:OnDelete:CASCADE"`
@@ -62,7 +62,7 @@ type AvatarImageCreation struct {
 
 type AvatarCharacterCreation struct {
 	ID               int                  `json:"id" gorm:"primary_key;auto_increment"`
-	UserID           uint                 `json:"user_id"`
+	UserID           string               `json:"user_id" gorm:"type:varchar(255)"`
 	User             User                 `json:"-" gorm:"foreignKey:UserID"`
 	AvatarCreationID string               `json:"avatar_creation_id" gorm:"not null;foreignKey:AvatarCreationID;constraint:OnDelete:CASCADE"`
 	AvatarCreation   AvatarCreation       `json:"-" gorm:"foreignKey:AvatarCreationID;constraint:OnDelete:CASCADE"`
@@ -75,7 +75,7 @@ type AvatarCharacterCreation struct {
 
 type AvatarVoiceCreation struct {
 	ID               int                  `json:"id" gorm:"primary_key;auto_increment"`
-	UserID           uint                 `json:"user_id"`
+	UserID           string               `json:"user_id" gorm:"type:varchar(255)"`
 	User             User                 `json:"-" gorm:"foreignKey:UserID"`
 	AvatarCreationID string               `json:"avatar_creation_id" gorm:"not null;foreignKey:AvatarCreationID;constraint:OnDelete:CASCADE"`
 	AvatarCreation   AvatarCreation       `json:"-" gorm:"foreignKey:AvatarCreationID;constraint:OnDelete:CASCADE"`

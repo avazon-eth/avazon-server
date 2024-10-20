@@ -22,7 +22,7 @@ func NewWebDataSessionService() *WebDataSessionService {
 }
 
 // returns session_id
-func (s *WebDataSessionService) PutData(userID uint, sessionID string, content string) error {
+func (s *WebDataSessionService) PutData(userID string, sessionID string, content string) error {
 	session, ok := s.data[sessionID]
 	if ok && session.UserID == userID {
 		session.Content = content
@@ -32,7 +32,7 @@ func (s *WebDataSessionService) PutData(userID uint, sessionID string, content s
 	return errs.ErrNotFound
 }
 
-func (s *WebDataSessionService) GetData(sessionID string, userID uint) (string, error) {
+func (s *WebDataSessionService) GetData(sessionID string, userID string) (string, error) {
 	session, ok := s.data[sessionID]
 	if !ok {
 		return "", errs.ErrNotFound
@@ -43,7 +43,7 @@ func (s *WebDataSessionService) GetData(sessionID string, userID uint) (string, 
 	return session.Content, nil
 }
 
-func (s *WebDataSessionService) ClearData(sessionID string, userID uint) error {
+func (s *WebDataSessionService) ClearData(sessionID string, userID string) error {
 	_, ok := s.data[sessionID]
 	if !ok {
 		return errs.ErrNotFound
@@ -52,7 +52,7 @@ func (s *WebDataSessionService) ClearData(sessionID string, userID uint) error {
 	return nil
 }
 
-func (s *WebDataSessionService) PutToken(userID uint, token string) (models.WebTokenSession, error) {
+func (s *WebDataSessionService) PutToken(userID string, token string) (models.WebTokenSession, error) {
 	session := &models.WebTokenSession{
 		TokenKey:      uuid.New().String(),
 		DataSessionID: uuid.New().String(),

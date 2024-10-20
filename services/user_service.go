@@ -1,12 +1,10 @@
 package services
 
 import (
-	"avazon-api/controllers/errs"
 	"avazon-api/models"
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -73,68 +71,78 @@ func (s *UserService) GetUserGoogleAccessTokenByAuthorizationCode(code string) (
 }
 
 // gets user info by google access token. If not exists, create new user and return user info.
-func (s *UserService) GetUserByGoogleAccessToken(accessToken string) (*models.User, error) {
-	// Google OAuth2 API endpoint
-	googleAPIURL := "https://www.googleapis.com/oauth2/v3/userinfo"
+// func (s *UserService) GetUserByGoogleAccessToken(accessToken string) (*models.User, error) {
+// 	// Google OAuth2 API endpoint
+// 	googleAPIURL := "https://www.googleapis.com/oauth2/v3/userinfo"
 
-	// Create HTTP client
-	client := &http.Client{}
+// 	// Create HTTP client
+// 	client := &http.Client{}
 
-	// Send request to Google API
-	req, err := http.NewRequest("GET", googleAPIURL, nil)
-	if err != nil {
+// 	// Send request to Google API
+// 	req, err := http.NewRequest("GET", googleAPIURL, nil)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	req.Header.Add("Authorization", "Bearer "+accessToken)
+
+// 	// Get response
+// 	resp, err := client.Do(req)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer resp.Body.Close()
+
+// 	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
+// 		return nil, errs.ErrOAuthTokenInvalid
+// 	}
+
+// 	// Read response body
+// 	body, err := io.ReadAll(resp.Body)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	// Parse JSON
+// 	var userInfo map[string]interface{}
+// 	if err := json.Unmarshal(body, &userInfo); err != nil {
+// 		return nil, err
+// 	}
+
+// 	// Check user info and generate token
+// 	if email, ok := userInfo["email"].(string); ok {
+// 		user := models.User{}
+// 		s.DB.Where("oauth2_provider = ? AND oauth2_id = ?", "google", userInfo["sub"]).First(&user)
+// 		if user.ID == "" {
+// 			user = models.User{
+// 				Username:        userInfo["name"].(string),
+// 				Email:           email,
+// 				ProfileImageURL: userInfo["picture"].(string),
+// 				OAuth2Provider:  "google",
+// 				OAuth2ID:        userInfo["sub"].(string),
+// 				Role:            "user",
+// 			}
+// 			s.DB.Create(&user)
+// 		}
+// 		return &user, nil
+// 	} else {
+// 		log.Printf("we cannot find user info from google api: %v", userInfo)
+// 		return nil, errs.ErrInternalServerError
+// 	}
+// }
+
+func (s *UserService) GetUserByID(userID string) (*models.User, error) {
+	var user models.User
+	if err := s.DB.Where("id = ?", userID).Find(&user).Error; err != nil {
 		return nil, err
 	}
-	req.Header.Add("Authorization", "Bearer "+accessToken)
-
-	// Get response
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
-		return nil, errs.ErrOAuthTokenInvalid
-	}
-
-	// Read response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	// Parse JSON
-	var userInfo map[string]interface{}
-	if err := json.Unmarshal(body, &userInfo); err != nil {
-		return nil, err
-	}
-
-	// Check user info and generate token
-	if email, ok := userInfo["email"].(string); ok {
-		user := models.User{}
-		s.DB.Where("oauth2_provider = ? AND oauth2_id = ?", "google", userInfo["sub"]).First(&user)
-		if user.ID == 0 { // if not exists, create new user
-			user = models.User{
-				Username:        userInfo["name"].(string),
-				Email:           email,
-				ProfileImageURL: userInfo["picture"].(string),
-				OAuth2Provider:  "google",
-				OAuth2ID:        userInfo["sub"].(string),
-				Role:            "user",
-			}
-			s.DB.Create(&user)
-		}
-		return &user, nil
-	} else {
-		log.Printf("we cannot find user info from google api: %v", userInfo)
-		return nil, errs.ErrInternalServerError
-	}
+	return &user, nil
 }
 
-func (s *UserService) GetUserByID(userID uint) (*models.User, error) {
+func (s *UserService) GetUserByIDCreateIfNotExists(userID string) (*models.User, error) {
 	var user models.User
-	if err := s.DB.First(&user, userID).Error; err != nil {
+	if err := s.DB.
+		Where("id = ?", userID).
+		FirstOrCreate(&user, models.User{ID: userID, Role: "user"}).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
