@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -36,6 +37,8 @@ func ValidateDynamicWalletJWT(tokenString string) (*jwt.Token, error) {
 	if dynamicWalletKey == nil {
 		return nil, fmt.Errorf("public key is not initialized")
 	}
+
+	log.Println("validate dynamic wallet jwt", tokenString[:30])
 
 	// Parse and validate the JWT token
 	return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
