@@ -3,6 +3,7 @@ package controllers
 import (
 	"avazon-api/controllers/errs"
 	"avazon-api/dto"
+	"avazon-api/middleware"
 	"avazon-api/models"
 	"avazon-api/services"
 	"avazon-api/utils"
@@ -184,11 +185,11 @@ type AvatarCreateResponse struct {
 // websocket upgrade here
 func (ctrl *AvatarCreationController) EnterSession(c *gin.Context) {
 	avatarCreationID := c.Param("creation_id")
-	userID, ok := utils.GetUserID(c)
-	if !ok {
-		HandleError(c, errs.ErrUnauthorized)
-		return
-	}
+	// userID, ok := utils.GetUserID(c)
+	// if !ok {
+	// 	HandleError(c, errs.ErrUnauthorized)
+	// 	return
+	// }
 
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
@@ -196,6 +197,19 @@ func (ctrl *AvatarCreationController) EnterSession(c *gin.Context) {
 		return
 	}
 	defer conn.Close()
+
+	accessTokenBody := &struct {
+		AccessToken string `json:"access_token"`
+	}{}
+	if err := conn.ReadJSON(accessTokenBody); err != nil {
+		log.Println("Error reading access token:", err)
+		return
+	}
+	userID, err := middleware.GetUserIDFromTokenString(accessTokenBody.AccessToken)
+	if err != nil {
+		log.Println("Invalid access token:", err)
+		return
+	}
 
 	session, err := ctrl.AvatarCreationService.EnterSession(userID, avatarCreationID)
 	if err != nil {

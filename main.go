@@ -33,6 +33,7 @@ func InitDB() *gorm.DB {
 		&models.SystemPromptUsage{},
 		&models.User{},
 		&models.AvatarCreation{},
+		&models.AvatarCreationChat{},
 		&models.AvatarCharacterCreation{},
 		&models.AvatarVoiceCreation{},
 		&models.AvatarImageCreation{},
@@ -70,6 +71,8 @@ func main() {
 
 	DB := InitDB()
 	r := gin.Default()
+	r.RedirectTrailingSlash = false
+	r.RedirectFixedPath = false
 	InitCORS(r)
 
 	// Init JWT keys
@@ -180,6 +183,8 @@ func main() {
 	)
 	avatarCreationController := controllers.NewAvatarCreationController(avatarCreationService)
 	avatarCreateRG := r.Group("/avatar/create")
+	avatarCreateRG.GET("/:creation_id/enter/", avatarCreationController.EnterSession) // Websocket exchange
+	avatarCreateRG.GET("/:creation_id/enter", avatarCreationController.EnterSession)  // Websocket exchange
 	avatarCreateRG.Use(middleware.JWTAuthMiddleware())
 	{
 		avatarCreateRG.POST("/new", avatarCreationController.StartCreation)
@@ -190,7 +195,6 @@ func main() {
 		avatarCreateRG.POST("/:creation_id/character", avatarCreationController.CreateAvatarCharacter)
 		avatarCreateRG.POST("/:creation_id/voice", avatarCreationController.CreateAvatarVoice)
 	}
-	avatarCreateRG.GET("/:creation_id/enter/", avatarCreationController.EnterSession) // Websocket exchange
 
 	// ** Avatar Public API **
 	avatarService := services.NewAvatarService(DB)
