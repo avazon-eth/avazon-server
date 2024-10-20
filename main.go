@@ -135,6 +135,25 @@ func main() {
 		systemPromptRG.DELETE("/usages/:agent_id", systemPromptController.DeleteSystemPromptUsage)
 	}
 
+	// ======= Web Data Session Domain =======
+	webDataSessionService := services.NewWebDataSessionService()
+	webDataSessionController := controllers.NewWebDataSessionController(webDataSessionService)
+	webDataSessionRG := r.Group("/web-data-session")
+	webDataSessionRG.POST("/token/fetch", webDataSessionController.GetToken)
+	webDataSessionRG.Use(middleware.JWTAuthMiddleware())
+	{
+		// 1. put token
+		webDataSessionRG.PUT("/token", webDataSessionController.PutToken)
+		// 2. put data
+		webDataSessionRG.PUT("/data", webDataSessionController.PutData)
+		// 3. get data
+		webDataSessionRG.POST("/data/fetch", webDataSessionController.GetData)
+		// 4. clear data
+		webDataSessionRG.DELETE("/data", webDataSessionController.ClearData)
+		// 5. clear token
+		webDataSessionRG.DELETE("/token", webDataSessionController.ClearToken)
+	}
+
 	// ======= User Domain =======
 	userService := services.NewUserService(DB)
 	userController := controllers.NewUserController(userService)

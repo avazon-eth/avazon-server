@@ -3,8 +3,8 @@ package models
 import "time"
 
 type Avatar struct {
-	ID string `json:"id" gorm:"primary_key;type:varchar(255 )"`
-	// UserID           uint           `json:"user_id"`
+	ID               string         `json:"id" gorm:"primary_key;type:varchar(255 )"`
+	UserID           uint           `json:"user_id"`
 	User             User           `json:"user" gorm:"foreignKey:UserID"`
 	AvatarCreationID string         `json:"-" gorm:"type:varchar(255)"`
 	AvatarCreation   AvatarCreation `json:"-" gorm:"foreignKey:AvatarCreationID"`
