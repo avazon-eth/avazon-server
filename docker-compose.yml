@@ -13,6 +13,7 @@ services:
       - ./test.db:/app/test.db
       - ./private_key.pem:/app/private_key.pem
       - ./public_key.pem:/app/public_key.pem
+      - ./dw_key.pem:/app/dw_key.pem
     depends_on:
       - redis  # Ensures Redis starts before avazon-api
     restart: unless-stopped  # Optional: Ensure service restarts on failure
