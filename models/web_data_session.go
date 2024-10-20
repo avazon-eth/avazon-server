@@ -3,9 +3,9 @@ package models
 import "time"
 
 type WebDataSession struct {
-	SessionID  string    `json:"session_id"` // uuid
-	UserID     uint      `json:"-"`          // user's id
-	Content    string    `json:"content"`    // it must be shorter than 1024 bytes
+	SessionID  string    `json:"-"`       // uuid
+	UserID     uint      `json:"-"`       // user's id
+	Content    string    `json:"content"` // it must be shorter than 1024 bytes
 	CreatedAt  time.Time `json:"created_at"`
 	LastUsedAt time.Time `json:"last_used_at"`
 }
