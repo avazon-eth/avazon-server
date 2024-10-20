@@ -19,7 +19,7 @@ Avazon is your ultimate partner in unleashing creativity for multimedia content 
 ![Avatar Creation](https://avazon.s3.us-west-1.amazonaws.com/ppts/avatar_creation.png)
 
 1. **Create Avatars**: Use the API to generate unique avatars that represent you or your creative ideas.
-2. **Enjoy and Create Avatar Content**: Engage with the content created by your avatars, whether it's music, videos, or images, and create new content effortlessly. [Video](https://avazon.s3.us-west-1.amazonaws.com/ppts/video_creation.png)
+2. **Enjoy and Create Avatar Content**: Engage with the content created by your avatars, whether it's music, videos, or images, and create new content effortlessly. [Video](https://avazon.s3.us-west-1.amazonaws.com/ppts/video_creation.mp4)
 
    <div style="display: flex; justify-content: space-around; height: 300px;">
        <img src="https://avazon.s3.us-west-1.amazonaws.com/ppts/remixed_original.png" alt="Original Avatar" style="width: 40%;"/>
